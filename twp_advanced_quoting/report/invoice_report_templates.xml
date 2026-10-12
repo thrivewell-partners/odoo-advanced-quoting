@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- A bundle's summary row carries its package count and package price in the
+         quantity and unit price columns, like any product row. -->
+    <template id="report_invoice_document" inherit_id="account.report_invoice_document">
+        <xpath expr="//t[@t-foreach='grouped_lines']/t[@t-else]/t[@t-set='line_colspan']" position="attributes">
+            <attribute name="t-value">1 if grouped_line.get('twp_bundle_qty') else 3 + (1 if display_discount else 0) + (1 if display_taxes and not grouped_line.get('taxes') else 0)</attribute>
+        </xpath>
+        <xpath expr="//td[@name='td_quantity_grouped']" position="attributes">
+            <attribute name="t-if">grouped_line.get('twp_bundle_qty') or hide_details or (hide_prices and grouped_line['display_type'] not in ('line_section', 'line_subsection', 'line_note'))</attribute>
+        </xpath>
+        <xpath expr="//td[@name='td_quantity_grouped']/div[1]" position="before">
+            <div t-if="grouped_line.get('twp_bundle_qty')">
+                <span t-out="grouped_line['twp_bundle_qty']" t-options="{'widget': 'float', 'decimal_precision': 'Product Unit'}" class="twp_bundle_qty">1.00</span>
+            </div>
+        </xpath>
+        <xpath expr="//td[@name='td_price_unit_grouped']" position="attributes">
+            <attribute name="t-if">grouped_line.get('twp_bundle_qty') or hide_details or grouped_line['display_type'] not in ('line_section', 'line_subsection')</attribute>
+        </xpath>
+        <xpath expr="//td[@name='td_price_unit_grouped']/span" position="before">
+            <span t-if="grouped_line.get('twp_bundle_qty')" t-out="grouped_line['twp_package_price']" t-options="{'widget': 'float', 'decimal_precision': 'Product Price'}" class="text-nowrap twp_package_price">9.00</span>
+        </xpath>
+        <xpath expr="//td[@name='td_discount_grouped']" position="attributes">
+            <attribute name="t-if">display_discount and (grouped_line.get('twp_bundle_qty') or hide_details or grouped_line['display_type'] == 'product')</attribute>
+        </xpath>
+        <xpath expr="//td[@name='td_taxes_grouped']" position="attributes">
+            <attribute name="t-if">display_taxes and (grouped_line.get('twp_bundle_qty') or hide_details or grouped_line['display_type'] == 'product' or grouped_line.get('taxes'))</attribute>
+        </xpath>
+    </template>
+
+</odoo>

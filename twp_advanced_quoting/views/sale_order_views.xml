@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_order_form" model="ir.ui.view">
+        <field name="name">sale.order.form.twp_advanced_quoting</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='order_details']/field[@name='payment_term_id']" position="after">
+                <field name="twp_document_style_id" options="{'no_create': True}"/>
+            </xpath>
+            <xpath expr="//field[@name='order_line']/list/field[@name='collapse_prices']" position="after">
+                <field name="twp_is_bundle" column_invisible="1"/>
+                <field name="twp_bundle_qty" column_invisible="1"/>
+                <field name="twp_option_mode" column_invisible="1"/>
+                <field name="twp_option_group" column_invisible="1"/>
+                <field name="twp_option_chosen" column_invisible="1"/>
+            </xpath>
+            <xpath expr="//field[@name='order_line']/list/field[@name='product_uom_qty']" position="before">
+                <field name="twp_qty_per_bundle" optional="show" invisible="display_type"/>
+            </xpath>
+            <xpath expr="//field[@name='order_line']/list/field[@name='price_unit']" position="after">
+                <field name="twp_hide_on_documents" optional="hide" invisible="display_type"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

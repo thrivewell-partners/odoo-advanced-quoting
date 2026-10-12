@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="report_saleorder_document" inherit_id="sale.report_saleorder_document">
+        <xpath expr="//t[@t-set='layout_document_title']/span[2]" position="before">
+            <span t-elif="doc.state in ['draft', 'sent'] and doc.twp_document_style_id.title_word">
+                <t t-out="doc.twp_document_style_id.title_word"/> #
+            </span>
+        </xpath>
+        <xpath expr="//div[@name='so_total_summary']" position="attributes">
+            <attribute name="t-if">doc.twp_document_style_id.totals_mode != 'hidden'</attribute>
+        </xpath>
+    </template>
+
+</odoo>
