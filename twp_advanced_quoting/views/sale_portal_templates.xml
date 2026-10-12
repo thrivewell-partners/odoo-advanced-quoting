@@ -125,7 +125,9 @@
                 <t t-out="' '"/>
             </t>
         </xpath>
-        <xpath expr="//tr[@name='tr_product']/td[@name='td_product_quantity']/div[@id='quote_qty']" position="attributes">
+        <!-- Sales Management replaces Odoo's quantity block with its own, so the cell's first
+             child is whichever of the two is installed. -->
+        <xpath expr="//tr[@name='tr_product']/td[@name='td_product_quantity']/*[1]" position="attributes">
             <attribute name="t-if">not twp_per_bundle</attribute>
         </xpath>
     </template>
