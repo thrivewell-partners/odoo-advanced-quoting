@@ -15,6 +15,15 @@ export class TwpPrintToggle extends Component {
         return Boolean(this.props.record.data[this.props.name]);
     }
 
+    /**
+     * A line not open for editing has its fields read-only, so the list says instead whether
+     * the line can change: not when the order is locked or the list is read-only.
+     */
+    get locked() {
+        const canChange = this.env.twpCanChangeLine;
+        return canChange ? !canChange(this.props.record) : this.props.readonly;
+    }
+
     get tooltip() {
         return this.hidden
             ? _t("Hidden on documents, still in the total. Click to print it.")
@@ -22,7 +31,7 @@ export class TwpPrintToggle extends Component {
     }
 
     toggle() {
-        if (!this.props.readonly) {
+        if (!this.locked) {
             this.props.record.update({ [this.props.name]: !this.hidden });
         }
     }

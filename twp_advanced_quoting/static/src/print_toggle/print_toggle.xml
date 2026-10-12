@@ -9,7 +9,7 @@
             t-att-data-tooltip="tooltip"
             t-att-aria-label="tooltip"
             t-att-aria-pressed="hidden ? 'true' : 'false'"
-            t-att-disabled="props.readonly"
+            t-att-disabled="locked"
             t-on-click.prevent.stop="toggle"
         />
     </t>

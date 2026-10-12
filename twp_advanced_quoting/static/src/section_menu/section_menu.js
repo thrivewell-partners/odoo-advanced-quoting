@@ -1,6 +1,7 @@
 import { SectionAndNoteListRenderer } from "@account/components/section_and_note_fields_backend/section_and_note_fields_backend";
 import { SaleOrderLineListRenderer } from "@sale/js/sale_order_line_field/sale_order_line_field";
 import { SaleOrderTemplateLineListRenderer } from "@sale_management/fields/sale_order_template_line_field/sale_order_template_line_field";
+import { useSubEnv } from "@odoo/owl";
 import { patch } from "@web/core/utils/patch";
 
 // Cells a bundle's or an option's row keeps beside its section total.
@@ -15,6 +16,14 @@ function twpGroups(record) {
 }
 
 patch(SectionAndNoteListRenderer.prototype, {
+    setup() {
+        super.setup();
+        // The print toggle changes a line without opening it, so it asks the list.
+        useSubEnv({
+            twpCanChangeLine: (record) => !this.props.readonly && !this.isRecordReadonly(record),
+        });
+    },
+
     /**
      * The bundle or section, around this line, that prints it as part of one row.
      */
