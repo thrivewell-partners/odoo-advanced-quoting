@@ -55,7 +55,8 @@ class TestExclusion(QuoteCase, TransactionCase):
             "discount_type": "amount",
             "discount_amount": 630.0,
         }).action_apply_discount()
-        self.assertEqual(order.amount_untaxed, 5670.0)
+        # A fixed discount is an amount off the taxed total.
+        self.assertEqual(order.amount_total, 6300.0)
 
     def test_line_discount_and_the_portal_saving(self):
         order = self.make_order()
