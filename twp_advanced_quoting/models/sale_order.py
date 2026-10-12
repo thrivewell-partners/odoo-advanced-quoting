@@ -182,9 +182,16 @@ class SaleOrder(models.Model):
         return self.company_id.twp_introduction_enabled and not is_html_empty(self.twp_introduction)
 
     def _twp_line_numbers(self, lines):
-        """{line id: number} for the product rows among the lines to print."""
-        product_lines = lines.filtered(lambda line: not line.display_type and line.product_type != "combo")
-        return {line.id: number for number, line in enumerate(product_lines, start=1)}
+        """{line id: number} for the numbered rows among the lines to print.
+
+        A bundle takes one number on its own row and its members print without one; every
+        other product row is numbered.
+        """
+        numbered = lines.filtered(
+            lambda line: line.twp_is_bundle if line.display_type
+            else line.product_type != "combo" and not line._twp_bundle()
+        )
+        return {line.id: number for number, line in enumerate(numbered, start=1)}
 
     def _prepare_invoice(self):
         values = super()._prepare_invoice()

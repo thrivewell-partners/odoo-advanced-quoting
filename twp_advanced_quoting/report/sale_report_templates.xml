@@ -80,6 +80,7 @@
         </xpath>
         <xpath expr="//tr[@name='tr_product']/td[@name='td_product_name']" position="before">
             <t t-set="collapse_prices" t-value="twp_group_collapse_prices or line.twp_hide_price"/>
+            <t t-set="twp_per_bundle" t-value="line._twp_print_per_bundle()"/>
             <td t-if="twp_show_numbers" name="twp_td_line_number" class="text-end">
                 <span t-out="twp_numbers.get(line.id, '')">1</span>
             </td>
@@ -96,7 +97,9 @@
             </td>
         </xpath>
         <xpath expr="//tr[@name='tr_section_group']/td[@name='td_section_group_name']" position="before">
-            <td t-if="twp_show_numbers" name="twp_td_line_number"/>
+            <td t-if="twp_show_numbers" name="twp_td_line_number" class="text-end">
+                <span t-out="twp_numbers.get(line.id, '')">1</span>
+            </td>
         </xpath>
         <xpath expr="//tr[@name='tr_section_group']/td[@name='td_section_group_name']" position="after">
             <td t-if="twp_show_code" name="twp_td_code"/>
@@ -108,7 +111,9 @@
             <tr t-if="(is_section or is_subsection) and line.twp_is_bundle" name="twp_tr_bundle"
                 t-att-class="'fw-bolder o_line_section' if is_section else 'fw-bold o_line_subsection'">
                 <t t-set="twp_bundle_row" t-value="line._twp_bundle_row(price_field)"/>
-                <td t-if="twp_show_numbers" name="twp_td_line_number"/>
+                <td t-if="twp_show_numbers" name="twp_td_line_number" class="text-end">
+                    <span t-out="twp_numbers.get(line.id, '')">1</span>
+                </td>
                 <td name="twp_td_bundle_name" t-att-class="padding_class">
                     <span t-field="line.name">Heater package</span>
                 </td>
@@ -144,16 +149,23 @@
             <attribute name="t-out">section_line['price_subtotal'] / line.twp_bundle_qty if line.twp_is_bundle and line.twp_bundle_qty else section_line['price_subtotal']</attribute>
         </xpath>
 
-        <!-- A member prints its quantity per bundle, if the company prints them that way. -->
+        <!-- A member prints its quantity per bundle, if the company prints them that way, as
+             QuoteWerks does: "(3)" before the description and nothing in the quantity column. -->
+        <xpath expr="//tr[@name='tr_product']/td[@name='td_product_name']/span[1]" position="before">
+            <t t-set="twp_per_bundle_label" t-value="line._twp_per_bundle_label() if twp_per_bundle else ''"/>
+            <t t-if="twp_per_bundle_label">
+                <span class="text-nowrap twp_qty_per_bundle" t-out="twp_per_bundle_label">(3)</span>
+                <t t-out="' '"/>
+            </t>
+        </xpath>
         <xpath expr="//tr[@name='tr_product']/td[@name='td_product_quantity']/span[@t-field='line.product_uom_qty']" position="attributes">
             <attribute name="t-if">not twp_per_bundle</attribute>
         </xpath>
-        <xpath expr="//tr[@name='tr_product']/td[@name='td_product_quantity']/span[@t-field='line.product_uom_qty']" position="before">
-            <t t-set="twp_per_bundle" t-value="line._twp_print_per_bundle()"/>
-            <span t-if="twp_per_bundle" t-field="line.twp_qty_per_bundle" class="text-nowrap twp_qty_per_bundle">3</span>
+        <xpath expr="//tr[@name='tr_product']/td[@name='td_product_quantity']/span[@t-field='line.product_uom_id']" position="attributes">
+            <attribute name="t-if">not twp_per_bundle</attribute>
         </xpath>
-        <xpath expr="//tr[@name='tr_product']/td[@name='td_product_quantity']/span[@t-field='line.product_uom_id']" position="after">
-            <span t-if="twp_per_bundle" class="text-muted small text-nowrap">per package</span>
+        <xpath expr="//tr[@name='tr_product']/td[@name='td_product_quantity']/span[@class='text-muted small']" position="attributes">
+            <attribute name="t-if" add="not twp_per_bundle" separator=" and "/>
         </xpath>
 
         <xpath expr="//div[@name='so_total_summary']" position="attributes">

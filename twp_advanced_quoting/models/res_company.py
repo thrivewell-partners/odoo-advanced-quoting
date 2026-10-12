@@ -18,12 +18,13 @@ class ResCompany(models.Model):
     twp_invoice_padding = fields.Integer(string="Invoice Number Digits", default=4)
 
     twp_bundle_member_qty = fields.Selection(
-        [("total", "Total quantity"), ("per_bundle", "Quantity per bundle")],
+        [("total", "Total quantity"), ("per_bundle", "Per bundle, as (3)")],
         string="Bundle Member Quantities",
         default="total",
         required=True,
         help="How a bundle's members print their quantities on the quote and the online page: "
-             "the total ordered, or the quantity in one bundle. Invoices print what is billed.",
+             "the total ordered, in the quantity column, or the quantity in one bundle, in brackets "
+             "before the description as QuoteWerks prints it. Invoices print what is billed.",
     )
     twp_bundle_adjustment_product_id = fields.Many2one(
         "product.product",

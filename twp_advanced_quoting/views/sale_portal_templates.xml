@@ -53,6 +53,7 @@
         </xpath>
         <xpath expr="//tr[@name='tr_product']/td[@name='td_product_name']" position="before">
             <t t-set="collapse_prices" t-value="twp_group_collapse_prices or line.twp_hide_price"/>
+            <t t-set="twp_per_bundle" t-value="line._twp_print_per_bundle()"/>
             <td t-if="twp_show_numbers" name="twp_td_line_number" class="text-end">
                 <span t-out="twp_numbers.get(line.id, '')"/>
             </td>
@@ -69,7 +70,9 @@
             </td>
         </xpath>
         <xpath expr="//tr[@name='tr_section_group']/td[@name='td_section_group_name']" position="before">
-            <td t-if="twp_show_numbers" name="twp_td_line_number"/>
+            <td t-if="twp_show_numbers" name="twp_td_line_number" class="text-end">
+                <span t-out="twp_numbers.get(line.id, '')"/>
+            </td>
         </xpath>
         <xpath expr="//tr[@name='tr_section_group']/td[@name='td_section_group_name']" position="after">
             <td t-if="twp_show_code" name="twp_td_code"/>
@@ -80,7 +83,9 @@
             <tr t-if="(is_section or is_subsection) and line.twp_is_bundle" name="twp_tr_bundle"
                 t-att-class="'fw-bolder o_line_section' if is_section else 'fw-bold o_line_subsection'">
                 <t t-set="twp_bundle_row" t-value="line._twp_bundle_row(price_field)"/>
-                <td t-if="twp_show_numbers" name="twp_td_line_number"/>
+                <td t-if="twp_show_numbers" name="twp_td_line_number" class="text-end">
+                    <span t-out="twp_numbers.get(line.id, '')"/>
+                </td>
                 <td name="twp_td_bundle_name" t-att-class="padding_class">
                     <span t-field="line.name"/>
                 </td>
@@ -113,15 +118,14 @@
         <xpath expr="//td[@name='td_section_group_priceunit']/span" position="attributes">
             <attribute name="t-out">section_line['price_subtotal'] / line.twp_bundle_qty if line.twp_is_bundle and line.twp_bundle_qty else section_line['price_subtotal']</attribute>
         </xpath>
-        <xpath expr="//tr[@name='tr_product']/td[@name='td_product_quantity']/*[1]" position="before">
-            <t t-set="twp_per_bundle" t-value="line._twp_print_per_bundle()"/>
-            <div t-if="twp_per_bundle" class="twp_member_qty">
-                <span t-field="line.twp_qty_per_bundle" class="twp_qty_per_bundle"/>
-                <span t-field="line.product_uom_id"/>
-                <span class="text-muted small text-nowrap">per package</span>
-            </div>
+        <xpath expr="//span[@name='span_product_name']" position="before">
+            <t t-set="twp_per_bundle_label" t-value="line._twp_per_bundle_label() if twp_per_bundle else ''"/>
+            <t t-if="twp_per_bundle_label">
+                <span class="text-nowrap twp_qty_per_bundle" t-out="twp_per_bundle_label"/>
+                <t t-out="' '"/>
+            </t>
         </xpath>
-        <xpath expr="//tr[@name='tr_product']/td[@name='td_product_quantity']/*[last()]" position="attributes">
+        <xpath expr="//tr[@name='tr_product']/td[@name='td_product_quantity']/div[@id='quote_qty']" position="attributes">
             <attribute name="t-if">not twp_per_bundle</attribute>
         </xpath>
     </template>

@@ -192,20 +192,50 @@ class TestBundleDocument(BundleCase, TransactionCase):
         self.assertNotIn("TWP Labor", page)
 
     def test_members_per_bundle(self):
+        """As QuoteWerks prints them: "(3)" before the description, the quantity column empty,
+        and nothing for one per bundle."""
         self.env.company.twp_bundle_member_qty = "per_bundle"
         page = self.render_quote(self.make_order(bundle_only=True))
-        bracket = " ".join(self.texts(self.cells(page, "TWP Bracket")))
-        self.assertIn("3.00", bracket)
-        self.assertIn("per package", bracket)
-        self.assertNotIn("15.00", bracket)
+        bracket = self.texts(self.cells(page, "TWP Bracket"))
+        self.assertEqual(bracket[0], "(3) [SMB] TWP Bracket")
+        self.assertEqual(bracket[1], "")
+        heater = self.texts(self.cells(page, "TWP Heater"))
+        self.assertEqual(heater[0], "[HL3-30] TWP Heater")
+        self.assertEqual(heater[1], "")
+        self.assertNotIn("per package", page)
+
+    def test_per_bundle_label(self):
+        order = self.make_order(bundle_only=True)
+        bracket = self.line(order, self.bracket)
+        self.assertEqual(bracket._twp_per_bundle_label(), "(3)")
+        bracket.twp_qty_per_bundle = 2.5
+        self.assertEqual(bracket._twp_per_bundle_label(), "(2.5)")
+        self.assertEqual(self.line(order, self.heater)._twp_per_bundle_label(), "")
 
     def test_bundle_row_with_line_numbers_and_codes(self):
+        """The bundle row takes the number; its members print without one."""
+        self.env.company.twp_bundle_member_qty = "per_bundle"
         order = self.make_order(bundle_only=True)
+        order.write({"order_line": [
+            Command.create({"display_type": "line_section", "name": "Extras", "sequence": 20}),
+            Command.create({"product_id": self.fan.id, "product_uom_qty": 1, "sequence": 21}),
+        ]})
         order.twp_document_style_id = self.style
         page = self.render_quote(order)
         row = self.cells(page, "Heater package")
         self.assertEqual(len(row), len(self.headers(page)))
+        self.assertEqual(self.texts(row)[0], "1")
         self.assertEqual(self.texts(row)[3], "5.00")
+        self.assertEqual(self.texts(self.cells(page, "TWP Heater"))[0], "")
+        self.assertEqual(self.texts(self.cells(page, "TWP Bracket"))[:2], ["", "(3) TWP Bracket"])
+        self.assertEqual(self.texts(self.cells(page, "TWP Fan"))[0], "2")
+
+    def test_bundle_hiding_its_composition_numbered(self):
+        order = self.make_order(bundle_only=True)
+        order.twp_document_style_id = self.style
+        self.section(order, "Heater package").write({"collapse_composition": True, "collapse_prices": False})
+        row = self.texts(self.cells(self.render_quote(order), "Heater package"))
+        self.assertEqual(row[0], "1")
 
     def test_bundle_hiding_its_composition(self):
         order = self.make_order(bundle_only=True)
@@ -301,8 +331,9 @@ class TestBundlePortal(BundleCase, HttpCase):
         self.assertIn("5.00", text)
         self.assertIn("1,260.00", text)
         self.assertIn("6,300.00", text)
-        bracket = " ".join(self.texts(self.cells(page, "TWP Bracket")))
-        self.assertIn("3.00", bracket)
-        self.assertIn("per package", bracket)
-        self.assertNotIn("20.00", bracket)
+        bracket = self.texts(self.cells(page, "TWP Bracket"))
+        self.assertEqual(bracket[0], "(3) [SMB] TWP Bracket")
+        self.assertNotIn("15.00", bracket[1])
+        self.assertNotIn("per package", page)
+        self.assertNotIn("20.00", " ".join(bracket))
         self.assertNotIn("TWP Labor", page)

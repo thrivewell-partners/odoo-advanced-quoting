@@ -1,5 +1,5 @@
 from odoo import api, fields, models
-from odoo.tools import float_compare
+from odoo.tools import float_compare, float_repr, float_round
 from odoo.tools.misc import unique
 
 OPTION_MODES = [
@@ -239,6 +239,18 @@ class SaleOrderLine(models.Model):
         """Whether this member prints its quantity per bundle rather than in total."""
         self.ensure_one()
         return self.order_id.company_id.twp_bundle_member_qty == "per_bundle" and bool(self._twp_bundle())
+
+    def _twp_per_bundle_label(self):
+        """A member's quantity per bundle as QuoteWerks prints it before the description: "(3)".
+
+        One per bundle prints nothing, as in QuoteWerks.
+        """
+        self.ensure_one()
+        digits = self.env["decimal.precision"].precision_get("Product Unit")
+        qty = float_round(self.twp_qty_per_bundle, precision_digits=digits)
+        if float_compare(qty, 1.0, precision_digits=digits) == 0:
+            return ""
+        return f"({float_repr(qty, digits).rstrip('0').rstrip('.')})"
 
     # ------------------------------------------------------------
     # Bundle adjustments
