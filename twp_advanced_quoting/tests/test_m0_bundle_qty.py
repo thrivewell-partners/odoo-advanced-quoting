@@ -60,6 +60,20 @@ class TestBundleQuantities(QuoteCase, TransactionCase):
         self.assertEqual(bracket.product_uom_qty, 15.0)
         self.assertEqual(self.line(order, self.heater).product_uom_qty, 6.0)
 
+    def test_global_discount_is_not_a_member(self):
+        # The wizard appends its line at sequence 999, under the last section: here, the bundle.
+        order = self.make_order(bundle_only=True)
+        self.env["sale.order.discount"].create({
+            "sale_order_id": order.id,
+            "discount_type": "so_discount",
+            "discount_percentage": 0.1,
+        }).action_apply_discount()
+        discount = order.order_line.filtered(lambda l: l._is_global_discount())
+        self.assertEqual(discount.product_uom_qty, 1.0)
+        self.section(order, "Heater package").twp_bundle_qty = 6
+        self.assertEqual(discount.product_uom_qty, 1.0)
+        self.assertEqual(order.amount_untaxed, 7560.0 - 630.0)
+
     def test_confirmed_order(self):
         order = self.make_order(bundle_only=True)
         order.action_confirm()

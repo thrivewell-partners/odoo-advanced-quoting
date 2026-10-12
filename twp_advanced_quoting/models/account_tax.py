@@ -10,6 +10,12 @@ class AccountTax(models.Model):
         The discount wizard and the down payment wizard each build base lines from every
         order line rather than from `_get_priced_lines`, and both pass them through here.
         """
+        lines = self.env["sale.order.line"].union(*(
+            base_line["record"] for base_line in base_lines
+            if isinstance(base_line.get("record"), models.BaseModel)
+            and base_line["record"]._name == "sale.order.line"
+        ))
+        lines._twp_refresh_parents()
         return [
             base_line for base_line in base_lines
             if not (

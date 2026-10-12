@@ -19,7 +19,9 @@ class SaleOrder(models.Model):
     )
 
     def _get_priced_lines(self):
-        return super()._get_priced_lines().filtered(lambda line: not line._twp_is_excluded())
+        lines = super()._get_priced_lines()
+        lines._twp_refresh_parents()
+        return lines.filtered(lambda line: not line._twp_is_excluded())
 
     @api.depends(*EXCLUSION_DEPENDS)
     def _compute_amounts(self):
@@ -35,6 +37,7 @@ class SaleOrder(models.Model):
         # untaxed amount as the customer's saving, so excluded lines come off.
         super()._compute_amount_undiscounted()
         AccountTax = self.env["account.tax"]
+        self.order_line._twp_refresh_parents()
         for order in self:
             for line in order.order_line.filtered(lambda l: l._twp_is_excluded()):
                 base_line = line._prepare_base_line_for_taxes_computation(discount=0)

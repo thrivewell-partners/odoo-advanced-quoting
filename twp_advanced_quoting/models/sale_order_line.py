@@ -63,14 +63,26 @@ class SaleOrderLine(models.Model):
     # Section membership
     # ------------------------------------------------------------
 
+    def _twp_refresh_parents(self):
+        """Drop the cached parent_id of every line on these lines' orders.
+
+        Odoo computes parent_id from sequence with no dependencies, so once read it stays
+        cached for the transaction, through any resequencing.
+        """
+        self.order_id.order_line.invalidate_recordset(["parent_id"])
+
     def _twp_enclosing_sections(self):
         """The line's parent and, through a subsection, its grandparent."""
         self.ensure_one()
         return self.parent_id | self.parent_id.parent_id
 
+    def _twp_is_special(self):
+        # A global discount or down payment is appended under whatever section is last.
+        return self.is_downpayment or self._is_global_discount()
+
     def _twp_bundle(self):
         self.ensure_one()
-        if self.display_type:
+        if self.display_type or self._twp_is_special():
             return self.browse()
         return self._twp_enclosing_sections().filtered("twp_is_bundle")[:1]
 
@@ -83,7 +95,7 @@ class SaleOrderLine(models.Model):
     def _twp_is_excluded(self):
         """Whether this line is kept out of the order total."""
         self.ensure_one()
-        if self.display_type:
+        if self.display_type or self._twp_is_special():
             return False
         section = self._twp_option_section()
         return bool(section) and not section.twp_option_chosen
@@ -100,6 +112,7 @@ class SaleOrderLine(models.Model):
         per-bundle quantity from it.
         """
         rederive = rederive or self.browse()
+        self._twp_refresh_parents()
         digits = self.env["decimal.precision"].precision_get("Product Unit")
         sync = self.with_context(twp_bundle_sync=True)
         for line in sync.filtered(lambda l: not l.display_type):
