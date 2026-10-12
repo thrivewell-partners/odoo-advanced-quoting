@@ -85,9 +85,25 @@ class SaleOrderLine(models.Model):
         self.order_id.order_line.invalidate_recordset(["parent_id"])
 
     def _twp_enclosing_sections(self):
-        """The line's parent and, through a subsection, its grandparent."""
+        """The line's subsection, then its section, read from the order's sequence.
+
+        Read here rather than from Odoo's parent_id, which a new line's own onchange can't
+        compute, and which stays cached through a resequence.
+        """
         self.ensure_one()
-        return self.parent_id | self.parent_id.parent_id
+        section = subsection = self.browse()
+        for line in self.order_id.order_line.sorted("sequence"):
+            if line == self:
+                if self.display_type == "line_section":
+                    return self.browse()
+                if self.display_type == "line_subsection":
+                    return section
+                return subsection | section
+            if line.display_type == "line_section":
+                section, subsection = line, self.browse()
+            elif line.display_type == "line_subsection":
+                subsection = line
+        return self.browse()
 
     def _twp_is_special(self):
         # A global discount or down payment is appended under whatever section is last.
@@ -105,11 +121,8 @@ class SaleOrderLine(models.Model):
         "order_id.order_line.twp_is_bundle",
     )
     def _compute_twp_in_bundle(self):
-        self._twp_refresh_parents()
         for line in self:
-            # A new line's own onchange sees an order whose lines don't include it yet, and
-            # Odoo's parent_id can't be worked out there; the order's onchange sets it right.
-            line.twp_in_bundle = line in line.order_id.order_line and bool(line._twp_bundle())
+            line.twp_in_bundle = bool(line._twp_bundle())
 
     def _twp_option_section(self):
         self.ensure_one()
