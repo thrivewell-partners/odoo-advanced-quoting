@@ -4,7 +4,7 @@
     <template id="report_invoice_document" inherit_id="account.report_invoice_document">
         <!-- Job Name, carried from the order -->
         <xpath expr="//div[@id='informations']" position="attributes">
-            <attribute name="t-if" add="or o._twp_header_fields()" separator=" "/>
+            <attribute name="t-if" add="o._twp_header_fields()" separator="or"/>
         </xpath>
         <xpath expr="//div[@id='informations']" position="inside">
             <div t-foreach="o._twp_header_fields()" t-as="twp_field" class="col" t-att-name="twp_field['name']">
