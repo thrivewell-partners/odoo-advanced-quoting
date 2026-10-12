@@ -202,7 +202,7 @@
         <xpath expr="//tr[@name='tr_product']/td[@name='td_product_quantity']/span[@t-field='line.product_uom_id']" position="attributes">
             <attribute name="t-if">not twp_per_bundle</attribute>
         </xpath>
-        <xpath expr="//tr[@name='tr_product']/td[@name='td_product_quantity']/span[@class='text-muted small']" position="attributes">
+        <xpath expr="//tr[@name='tr_product']/td[@name='td_product_quantity']/span[hasclass('text-muted', 'small')]" position="attributes">
             <attribute name="t-if" add="not twp_per_bundle" separator=" and "/>
         </xpath>
 

@@ -1,9 +1,7 @@
-import time
-
 from odoo import Command
 from odoo.exceptions import UserError
 from odoo.tests import HttpCase, TransactionCase, new_test_user, tagged
-from odoo.tools.safe_eval import safe_eval
+from odoo.tools.safe_eval import safe_eval, time
 
 from odoo.addons.twp_advanced_quoting import SALE_REPORT_NAME, post_init_hook, uninstall_hook
 
@@ -235,6 +233,7 @@ class TestItemizedRule(StyleCase, TransactionCase):
         self.assertFalse(order.twp_style_issues)
         self.env.flush_all()
         self.env.cr.precommit.run()
+        order.invalidate_recordset(["message_ids"])
         tracked = order.message_ids.tracking_value_ids.field_id.mapped("name")
         self.assertIn("twp_allow_options", tracked)
         # Still itemized: an option's lines keep their prices.
