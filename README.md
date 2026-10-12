@@ -7,7 +7,7 @@ Energy Distribution, moving off QuoteWerks, is the first client.
 
 | Module | Status | What it does |
 |---|---|---|
-| `twp_advanced_quoting` | M0: the proofs. Proofs 2 to 5 passed; proof 1 passed on the server, its browser half still to run. Nothing is built for clients yet | Everything in the build map's s3.1 to s3.6 |
+| `twp_advanced_quoting` | M1 done: header fields, introduction, Hide Price, line numbers and code column, quote numbers in Settings. Bundles (M2) next. Not yet released to any client | Everything in the build map's s3.1 to s3.6 |
 
 This repo is the master copy. Releases are copied into each client's code repo, which is that
 client's addons path on Oduflow.
