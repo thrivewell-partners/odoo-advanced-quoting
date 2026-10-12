@@ -11,7 +11,7 @@
             </xpath>
             <xpath expr="//field[@name='sale_order_template_line_ids']/list/field[@name='sequence']" position="after">
                 <field name="twp_hide_on_documents" string="Print" widget="twp_print_toggle" optional="show"
-                       invisible="display_type" width="40px"/>
+                       invisible="display_type" width="32px"/>
             </xpath>
             <xpath expr="//field[@name='sale_order_template_line_ids']/list" position="inside">
                 <field name="twp_hide_price" optional="hide" invisible="display_type"/>
