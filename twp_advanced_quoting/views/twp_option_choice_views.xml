@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="twp_option_choice_view_form" model="ir.ui.view">
+        <field name="name">twp.option.choice.form</field>
+        <field name="model">twp.option.choice</field>
+        <field name="arch" type="xml">
+            <form>
+                <p class="text-muted">
+                    Tick what the customer chose. The rest drop to quantity 0 and stay on the order as a record,
+                    never printed, delivered or invoiced.
+                </p>
+                <field name="order_id" invisible="1"/>
+                <field name="line_ids" nolabel="1">
+                    <list editable="bottom" create="0" delete="0">
+                        <field name="sequence" column_invisible="1"/>
+                        <field name="currency_id" column_invisible="1"/>
+                        <field name="name" readonly="1"/>
+                        <field name="option_mode" readonly="1"/>
+                        <field name="option_group" readonly="1" optional="hide"/>
+                        <field name="amount" readonly="1"/>
+                        <field name="chosen" widget="boolean_toggle"/>
+                    </list>
+                </field>
+                <footer>
+                    <button name="action_confirm" string="Confirm" type="object" class="btn-primary" data-hotkey="q"/>
+                    <button string="Discard" special="cancel" data-hotkey="x"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+</odoo>

@@ -105,6 +105,10 @@
                             </div>
                         </div>
                     </setting>
+                    <setting id="twp_options" company_dependent="1"
+                             help="Alternatives and add-ons stay out of the total until chosen. Confirming a quote that has them asks which the customer chose; the rest drop to quantity 0 and stay on the order as a record.">
+                        <field name="twp_ask_options_on_confirm"/>
+                    </setting>
                     <setting id="twp_document_styles" string="Document Styles"
                              help="How quotes are printed: title, totals, line numbers and the code column.">
                         <div class="content-group">

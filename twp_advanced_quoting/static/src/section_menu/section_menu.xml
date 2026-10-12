@@ -11,24 +11,34 @@
             <DropdownItem t-if="record.data.twp_is_bundle" onSelected="() => this.twpAddAdjustment(record)">
                 <i class="me-1 fa fa-fw fa-wrench"/><span>Add Adjustment</span>
             </DropdownItem>
-            <DropdownItem
-                t-if="record.data.twp_option_mode !== 'alternative'"
-                onSelected="() => this.twpSetOptionMode(record, 'alternative')"
-            >
-                <i class="me-1 fa fa-fw fa-random"/><span>Set Alternative</span>
-            </DropdownItem>
-            <DropdownItem
-                t-if="record.data.twp_option_mode !== 'addon'"
-                onSelected="() => this.twpSetOptionMode(record, 'addon')"
-            >
-                <i class="me-1 fa fa-fw fa-plus-square-o"/><span>Set Add-on</span>
-            </DropdownItem>
-            <DropdownItem
-                t-if="record.data.twp_option_mode !== 'included'"
-                onSelected="() => this.twpSetOptionMode(record, 'included')"
-            >
-                <i class="me-1 fa fa-fw fa-check"/><span>Include in Total</span>
-            </DropdownItem>
+            <t t-if="!this.twpOptionsLocked(record)">
+                <DropdownItem
+                    t-if="record.data.twp_option_mode !== 'included'"
+                    onSelected="() => this.twpToggleChosen(record)"
+                >
+                    <i class="me-1 fa fa-fw" t-att-class="record.data.twp_option_chosen ? 'fa-square-o' : 'fa-check-square-o'"/>
+                    <span t-if="record.data.twp_option_chosen">Mark Not Chosen</span>
+                    <span t-else="">Mark Chosen</span>
+                </DropdownItem>
+                <DropdownItem
+                    t-if="record.data.twp_option_mode !== 'alternative'"
+                    onSelected="() => this.twpSetOptionMode(record, 'alternative')"
+                >
+                    <i class="me-1 fa fa-fw fa-random"/><span>Set Alternative</span>
+                </DropdownItem>
+                <DropdownItem
+                    t-if="record.data.twp_option_mode !== 'addon'"
+                    onSelected="() => this.twpSetOptionMode(record, 'addon')"
+                >
+                    <i class="me-1 fa fa-fw fa-plus-square-o"/><span>Set Add-on</span>
+                </DropdownItem>
+                <DropdownItem
+                    t-if="record.data.twp_option_mode !== 'included'"
+                    onSelected="() => this.twpSetOptionMode(record, 'included')"
+                >
+                    <i class="me-1 fa fa-fw fa-check"/><span>Include in Total</span>
+                </DropdownItem>
+            </t>
         </t>
     </t>
 

@@ -15,10 +15,12 @@ class TwpDocumentStyle(models.Model):
         help="Printed in place of Quotation, such as Estimate or Proposal.",
     )
     totals_mode = fields.Selection(
-        [("full", "Full"), ("hidden", "Hidden")],
+        [("full", "Full"), ("options", "Full, with each option"), ("hidden", "Hidden")],
         string="Totals",
         default="full",
         required=True,
+        help="Full prints the total of what is included. With each option adds the total with each "
+             "alternative or add-on not yet chosen. A quote of nothing but options prints no total.",
     )
     show_line_numbers = fields.Boolean(
         string="Line Numbers",

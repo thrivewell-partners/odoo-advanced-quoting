@@ -24,6 +24,9 @@ class ResConfigSettings(models.TransientModel):
         related="company_id.twp_bundle_adjustment_product_id", readonly=False
     )
 
+    # Alternatives and add-ons
+    twp_ask_options_on_confirm = fields.Boolean(related="company_id.twp_ask_options_on_confirm", readonly=False)
+
     # Header fields
     twp_job_name_enabled = fields.Boolean(related="company_id.twp_job_name_enabled", readonly=False)
     twp_job_name_label = fields.Char(related="company_id.twp_job_name_label", readonly=False)

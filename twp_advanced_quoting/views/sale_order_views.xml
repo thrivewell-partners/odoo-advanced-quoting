@@ -6,6 +6,13 @@
         <field name="model">sale.order</field>
         <field name="inherit_id" ref="sale.view_order_form"/>
         <field name="arch" type="xml">
+            <!-- The Confirm buttons ask what the customer chose, when the quote has options. -->
+            <xpath expr="//header/button[@name='action_confirm'][1]" position="attributes">
+                <attribute name="context">{'validate_analytic': True, 'twp_ask_options': True}</attribute>
+            </xpath>
+            <xpath expr="//header/button[@name='action_confirm'][2]" position="attributes">
+                <attribute name="context">{'validate_analytic': True, 'twp_ask_options': True}</attribute>
+            </xpath>
             <xpath expr="//group[@name='partner_details']" position="inside">
                 <field name="twp_job_name"/>
             </xpath>
@@ -31,6 +38,7 @@
                 <field name="twp_option_mode" column_invisible="1"/>
                 <field name="twp_option_group" column_invisible="1"/>
                 <field name="twp_option_chosen" column_invisible="1"/>
+                <field name="twp_not_chosen" column_invisible="1"/>
             </xpath>
             <!-- Inside a bundle only the quantity per bundle is typed (D15). -->
             <xpath expr="//field[@name='order_line']/list/field[@name='product_uom_qty']" position="before">
@@ -39,8 +47,16 @@
             <xpath expr="//field[@name='order_line']/list/field[@name='product_uom_qty']" position="attributes">
                 <attribute name="readonly" add="twp_in_bundle" separator=" or "/>
             </xpath>
-            <!-- Just left of the amount, so the bundle's row can keep it beside the section total. -->
+            <!-- Just left of the amount, so a bundle's or an option's row can keep them beside the
+                 section total. -->
             <xpath expr="//field[@name='order_line']/list/field[@name='price_subtotal'][1]" position="before">
+                <field name="twp_option_group" string="Option Group" optional="hide"
+                       invisible="twp_option_mode != 'alternative' or not display_type"
+                       readonly="twp_option_mode != 'alternative' or not display_type"
+                       placeholder="One set"/>
+                <field name="twp_option_label" widget="badge" optional="show"
+                       invisible="not twp_option_label"
+                       decoration-success="twp_option_chosen" decoration-muted="twp_not_chosen"/>
                 <field name="twp_bundle_qty" string="Bundle Qty" optional="show"
                        invisible="not twp_is_bundle" readonly="not twp_is_bundle"/>
             </xpath>

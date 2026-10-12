@@ -1,6 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
+    <!-- Under an alternative's or add-on's name on a quote: whether it is in the total. -->
+    <template id="option_note">
+        <t t-set="twp_option_note" t-value="line._twp_option_note()"/>
+        <div t-if="twp_option_note" class="twp_option_note text-muted small fw-normal" t-out="twp_option_note">Not included in the total</div>
+    </template>
+
+    <!-- The order's total with each option not chosen, for a style that prints them. -->
+    <template id="option_totals">
+        <t t-set="twp_option_totals" t-value="order._twp_option_totals() if order.twp_document_style_id.totals_mode == 'options' else []"/>
+        <table t-if="twp_option_totals" class="table table-sm table-borderless twp_option_totals">
+            <tr t-foreach="twp_option_totals" t-as="twp_option_total">
+                <td>Total with <t t-out="twp_option_total['name']">Option 2</t></td>
+                <td class="text-end">
+                    <span class="text-nowrap" t-out="twp_option_total['amount']" t-options="{'widget': 'monetary', 'display_currency': order.currency_id}">7,000.00</span>
+                </td>
+            </tr>
+        </table>
+    </template>
+
     <template id="report_saleorder_document" inherit_id="sale.report_saleorder_document">
         <xpath expr="//t[@t-set='layout_document_title']/span[2]" position="before">
             <span t-elif="doc.state in ['draft', 'sent'] and doc.twp_document_style_id.title_word">
@@ -116,6 +135,7 @@
                 </td>
                 <td name="twp_td_bundle_name" t-att-class="padding_class">
                     <span t-field="line.name">Heater package</span>
+                    <t t-call="twp_advanced_quoting.option_note"/>
                 </td>
                 <td t-if="twp_show_code" name="twp_td_code"/>
                 <td name="twp_td_bundle_quantity" class="text-end">
@@ -136,6 +156,12 @@
         <xpath expr="//tr[@name='tr_section']" position="attributes">
             <attribute name="t-if"/>
             <attribute name="t-elif">is_section or is_subsection</attribute>
+        </xpath>
+        <xpath expr="//tr[@name='tr_section']/td[@name='td_section_name']/span" position="after">
+            <t t-call="twp_advanced_quoting.option_note"/>
+        </xpath>
+        <xpath expr="//td[@name='td_section_group_name']/span" position="after">
+            <t t-call="twp_advanced_quoting.option_note"/>
         </xpath>
 
         <!-- A bundle that hides its composition prints its packages on its summary row. -->
@@ -168,8 +194,14 @@
             <attribute name="t-if" add="not twp_per_bundle" separator=" and "/>
         </xpath>
 
+        <!-- No total when the style hides it, or the quote is nothing but options (D2). -->
         <xpath expr="//div[@name='so_total_summary']" position="attributes">
-            <attribute name="t-if">doc.twp_document_style_id.totals_mode != 'hidden'</attribute>
+            <attribute name="t-if">doc._twp_show_totals()</attribute>
+        </xpath>
+        <xpath expr="//div[@name='so_total_summary']//table[hasclass('o_total_table')]" position="after">
+            <t t-call="twp_advanced_quoting.option_totals">
+                <t t-set="order" t-value="doc"/>
+            </t>
         </xpath>
     </template>
 

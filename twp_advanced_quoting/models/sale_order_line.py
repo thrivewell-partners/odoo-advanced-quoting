@@ -1,4 +1,5 @@
-from odoo import api, fields, models
+from odoo import _, api, fields, models
+from odoo.exceptions import UserError
 from odoo.tools import float_compare, float_repr, float_round
 from odoo.tools.misc import unique
 
@@ -20,6 +21,9 @@ BUNDLE_FIELDS = {
     "collapse_prices",
     "collapse_composition",
 }
+
+# Settled when the order is confirmed (D3); changed again only once it is a quote.
+OPTION_FIELDS = {"twp_option_mode", "twp_option_group", "twp_option_chosen"}
 
 
 class SaleOrderLine(models.Model):
@@ -50,6 +54,24 @@ class SaleOrderLine(models.Model):
     twp_option_chosen = fields.Boolean(
         string="Chosen",
         help="The customer took this alternative or add-on, so it counts in the order total.",
+    )
+    twp_option_label = fields.Char(
+        string="Option",
+        compute="_compute_twp_option_label",
+        help="Alternatives and add-ons stay out of the total until they are chosen.",
+    )
+    twp_not_chosen = fields.Boolean(
+        string="Not Chosen",
+        copy=False,
+        readonly=True,
+        help="Left out when the order was confirmed: kept at quantity 0 as a record, never printed.",
+    )
+    twp_quoted_qty = fields.Float(
+        string="Quoted Quantity",
+        digits="Product Unit",
+        copy=False,
+        readonly=True,
+        help="The quantity quoted, before the order was confirmed without this option.",
     )
 
     # Product lines
@@ -131,12 +153,92 @@ class SaleOrderLine(models.Model):
         )[:1]
 
     def _twp_is_excluded(self):
-        """Whether this line is kept out of the order total."""
+        """Whether this line is kept out of the order total.
+
+        A line counts only when every alternative or add-on around it is chosen.
+        """
         self.ensure_one()
         if self.display_type or self._twp_is_special():
             return False
-        section = self._twp_option_section()
-        return bool(section) and not section.twp_option_chosen
+        return any(
+            section.twp_option_mode != "included" and not section.twp_option_chosen
+            for section in self._twp_enclosing_sections()
+        )
+
+    # ------------------------------------------------------------
+    # Alternatives and add-ons
+    # ------------------------------------------------------------
+
+    @api.depends("display_type", "twp_option_mode", "twp_option_chosen", "twp_not_chosen")
+    def _compute_twp_option_label(self):
+        labels = dict(self._fields["twp_option_mode"]._description_selection(self.env))
+        for line in self:
+            if not line.display_type or line.twp_option_mode == "included":
+                line.twp_option_label = False
+            elif line.twp_not_chosen:
+                line.twp_option_label = _("Not chosen")
+            elif line.twp_option_chosen:
+                line.twp_option_label = _("%s, chosen", labels[line.twp_option_mode])
+            else:
+                line.twp_option_label = labels[line.twp_option_mode]
+
+    def _twp_is_option(self):
+        self.ensure_one()
+        return self.display_type in ("line_section", "line_subsection") and self.twp_option_mode != "included"
+
+    def _twp_alternatives(self):
+        """The alternatives this one is a choice between, itself included.
+
+        Alternatives with the same Option Group are choices between each other; those with no
+        group form one set per order.
+        """
+        self.ensure_one()
+        return self.order_id.order_line.filtered(
+            lambda line: line._twp_is_option()
+            and line.twp_option_mode == "alternative"
+            and (line.twp_option_group or "") == (self.twp_option_group or "")
+        )
+
+    def _twp_section_members(self):
+        """Every line under this section or subsection, in order, its subsections included."""
+        self.ensure_one()
+        ends = ("line_section",) if self.display_type == "line_section" else ("line_section", "line_subsection")
+        members = self.browse()
+        inside = False
+        for line in self.order_id.order_line.sorted("sequence"):
+            if line == self:
+                inside = True
+            elif inside:
+                if line.display_type in ends:
+                    break
+                if not line._twp_is_special():
+                    members |= line
+        return members
+
+    def _twp_option_note(self):
+        """What a quote prints under an alternative or add-on: whether it is in the total."""
+        self.ensure_one()
+        if not self._twp_is_option() or self.order_id.state not in ("draft", "sent"):
+            return ""
+        if self.twp_option_chosen:
+            return _("Chosen, included in the total")
+        return _("Not included in the total")
+
+    def _twp_keep_one_alternative_chosen(self):
+        """A chosen alternative unchooses the others in its set."""
+        for line in self.filtered(lambda l: l._twp_is_option() and l.twp_option_mode == "alternative" and l.twp_option_chosen):
+            others = line._twp_alternatives().filtered(lambda other: other != line and other.twp_option_chosen)
+            if others:
+                others.with_context(twp_option_sync=True).twp_option_chosen = False
+
+    def _twp_check_options_editable(self, vals):
+        if OPTION_FIELDS & set(vals) and any(
+            line.display_type and line.order_id.state not in ("draft", "sent") for line in self
+        ):
+            raise UserError(_(
+                "The options were settled when the order was confirmed. "
+                "Set it back to a quotation to change them."
+            ))
 
     # ------------------------------------------------------------
     # Bundle quantities, held on the server
@@ -158,7 +260,7 @@ class SaleOrderLine(models.Model):
                     line.collapse_prices = True
                 continue
             bundle = line._twp_bundle()
-            if not bundle:
+            if not bundle or line.twp_not_chosen:
                 continue
             if not line.twp_qty_per_bundle:
                 line.twp_qty_per_bundle = line.product_uom_qty
@@ -177,6 +279,7 @@ class SaleOrderLine(models.Model):
     def create(self, vals_list):
         vals_list = [self._twp_bundle_vals(vals) for vals in vals_list]
         lines = super().create(vals_list)
+        lines._twp_keep_one_alternative_chosen()
         if not self.env.context.get("twp_bundle_sync"):
             # A price given with the line survives its first bundle quantity. Odoo counts it as
             # not typed by hand, so the quantity change would otherwise reprice it from the product.
@@ -187,10 +290,24 @@ class SaleOrderLine(models.Model):
 
     def write(self, vals):
         vals = self._twp_bundle_vals(vals)
+        if not self.env.context.get("twp_option_sync"):
+            self._twp_check_options_editable(vals)
         result = super().write(vals)
+        if not self.env.context.get("twp_option_sync") and (
+            vals.get("twp_option_chosen") or vals.get("twp_option_mode") == "alternative" or "twp_option_group" in vals
+        ):
+            self._twp_keep_one_alternative_chosen()
         if not self.env.context.get("twp_bundle_sync") and BUNDLE_FIELDS & set(vals):
             self.order_id.order_line._twp_sync_bundles()
         return result
+
+    def copy_data(self, default=None):
+        # A copy of a confirmed order quotes its options again at the quantities they were quoted at.
+        vals_list = super().copy_data(default=default)
+        for line, vals in zip(self, vals_list):
+            if line.twp_not_chosen and not line.display_type and "product_uom_qty" not in (default or {}):
+                vals["product_uom_qty"] = line.twp_quoted_qty
+        return vals_list
 
     # ------------------------------------------------------------
     # Documents

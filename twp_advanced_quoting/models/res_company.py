@@ -34,6 +34,13 @@ class ResCompany(models.Model):
              "It is hidden on documents and priced into the bundle.",
     )
 
+    twp_ask_options_on_confirm = fields.Boolean(
+        string="Ask What Was Chosen",
+        default=True,
+        help="Confirming a quote with alternatives or add-ons first asks which the customer chose. "
+             "Those not chosen drop to quantity 0 and stay on the order as a record.",
+    )
+
     twp_job_name_enabled = fields.Boolean(string="Job Name", default=True)
     twp_job_name_label = fields.Char(string="Job Name Label", default="Job Name")
     twp_ship_via_enabled = fields.Boolean(string="Ship Via", default=True)

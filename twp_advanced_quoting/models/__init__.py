@@ -8,3 +8,4 @@ from . import sale_order_line
 from . import sale_order_template
 from . import sale_order_template_line
 from . import twp_document_style
+from . import twp_option_choice

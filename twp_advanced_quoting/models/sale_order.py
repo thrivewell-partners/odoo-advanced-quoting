@@ -1,8 +1,11 @@
-from odoo import _, api, fields, models
+from odoo import Command, _, api, fields, models
 from odoo.exceptions import UserError
 from odoo.tools import is_html_empty
 
 from .header_fields import apply_header_field_settings, header_field_cache_key, header_field_settings
+
+# A price quoted on an option survives its quantity going to 0, and back.
+PRICE_FIELDS = ("price_unit", "technical_price_unit", "discount")
 
 # Changing any of these can move a line in or out of the order total.
 EXCLUSION_DEPENDS = (
@@ -122,6 +125,16 @@ class SaleOrder(models.Model):
             error_msg = order._confirmation_error_message()
             if error_msg:
                 raise UserError(error_msg)
+        # The Confirm button asks what the customer chose; any other confirmation, such as the
+        # customer signing online, takes the options as they are marked.
+        if (
+            self.env.context.get("twp_ask_options")
+            and len(self) == 1
+            and self.company_id.twp_ask_options_on_confirm
+            and self._twp_options()
+        ):
+            return self._twp_action_choose_options()
+        self._twp_settle_options()
         # Numbered before super, so deliveries, purchases and the confirmation email carry it.
         self.filtered(lambda order: order.company_id.twp_number_orders)._twp_take_order_number()
         return super().action_confirm()
@@ -147,7 +160,141 @@ class SaleOrder(models.Model):
         result = super().action_draft()
         for order in orders.filtered(lambda o: o.twp_quote_number and o.name == o.twp_order_number):
             order.name = order.twp_quote_number
+        orders.filtered(lambda order: order.state == "draft")._twp_restore_options()
         return result
+
+    # ------------------------------------------------------------
+    # Alternatives and add-ons
+    # ------------------------------------------------------------
+
+    def _twp_options(self):
+        """The alternatives and add-ons on these orders that carry products, in order."""
+        self.order_line._twp_refresh_parents()
+        return self.order_line.sorted("sequence").filtered(
+            lambda line: line._twp_is_option()
+            and any(not member.display_type for member in line._twp_section_members())
+        )
+
+    def _twp_action_choose_options(self):
+        self.ensure_one()
+        wizard = self.env["twp.option.choice"].create({
+            "order_id": self.id,
+            "line_ids": [
+                Command.create({"section_id": section.id, "chosen": section.twp_option_chosen})
+                for section in self._twp_options()
+            ],
+        })
+        return {
+            "type": "ir.actions.act_window",
+            "name": _("What did the customer choose?"),
+            "res_model": "twp.option.choice",
+            "res_id": wizard.id,
+            "view_mode": "form",
+            "target": "new",
+        }
+
+    def _twp_settle_options(self):
+        """Drop every option not chosen to quantity 0, kept on the order as a record (D3).
+
+        Confirmed as they are, its lines would be delivered and invoiced.
+        """
+        for order in self:
+            for section in order._twp_options().filtered(lambda s: not s.twp_option_chosen):
+                members = (section | section._twp_section_members()).filtered(lambda line: not line.twp_not_chosen)
+                products = members.filtered(lambda line: not line.display_type)
+                with self.env.protecting([self.env["sale.order.line"]._fields[name] for name in PRICE_FIELDS], products):
+                    for line in products:
+                        line.write({
+                            "twp_not_chosen": True,
+                            "twp_quoted_qty": line.product_uom_qty,
+                            "product_uom_qty": 0.0,
+                        })
+                (members - products).write({"twp_not_chosen": True})
+            if order.order_line.filtered("twp_not_chosen"):
+                order.message_post(body=_(
+                    "Confirmed without: %s.",
+                    ", ".join(order.order_line.filtered(lambda l: l.twp_not_chosen and l._twp_is_option()).mapped("name")),
+                ))
+
+    def _twp_restore_options(self):
+        """Back to a quote, every option not chosen is quoted again at its quantities."""
+        for order in self:
+            lines = order.order_line.filtered("twp_not_chosen")
+            products = lines.filtered(lambda line: not line.display_type)
+            with self.env.protecting([self.env["sale.order.line"]._fields[name] for name in PRICE_FIELDS], products):
+                for line in products:
+                    line.write({"twp_not_chosen": False, "product_uom_qty": line.twp_quoted_qty})
+            (lines - products).write({"twp_not_chosen": False})
+
+    def _twp_options_only(self):
+        """A quote whose every product is in an alternative or add-on not chosen (D2)."""
+        self.ensure_one()
+        if self.state not in ("draft", "sent"):
+            return False
+        self.order_line._twp_refresh_parents()
+        lines = self.order_line.filtered(lambda line: not line.display_type and not line._twp_is_special())
+        return bool(lines) and all(line._twp_is_excluded() for line in lines)
+
+    def _twp_needs_choice(self):
+        """A quote the customer can't accept online yet: a set of alternatives with none chosen,
+        or nothing but options."""
+        self.ensure_one()
+        if self.state not in ("draft", "sent"):
+            return False
+        alternatives = self._twp_options().filtered(lambda line: line.twp_option_mode == "alternative")
+        return self._twp_options_only() or any(
+            not section._twp_alternatives().filtered("twp_option_chosen") for section in alternatives
+        )
+
+    def _twp_show_totals(self):
+        self.ensure_one()
+        return self.twp_document_style_id.totals_mode != "hidden" and not self._twp_options_only()
+
+    def _twp_amount_total(self, lines):
+        AccountTax = self.env["account.tax"]
+        base_lines = [line._prepare_base_line_for_taxes_computation() for line in lines]
+        AccountTax._add_tax_details_in_base_lines(base_lines, self.company_id)
+        AccountTax._round_base_lines_tax_details(base_lines, self.company_id)
+        return AccountTax._get_tax_totals_summary(
+            base_lines=base_lines,
+            currency=self.currency_id or self.company_id.currency_id,
+            company=self.company_id,
+        )["total_amount_currency"]
+
+    def _twp_option_totals(self):
+        """[{name, amount}]: the order's total with each option not chosen, for the totals block.
+
+        An alternative takes the place of the one chosen in its set, if any.
+        """
+        self.ensure_one()
+        if self.state not in ("draft", "sent"):
+            return []
+        options = self._twp_options()
+        lines = self.order_line.filtered(lambda line: not line.display_type)
+        included = lines.filtered(lambda line: not line._twp_is_excluded())
+        rows = []
+        for section in options.filtered(lambda s: not s.twp_option_chosen):
+            members = section._twp_section_members().filtered(lambda line: not line.display_type)
+            with_option = included
+            if section.twp_option_mode == "alternative":
+                for chosen in section._twp_alternatives().filtered("twp_option_chosen"):
+                    with_option -= chosen._twp_section_members()
+            # A line inside another option not chosen stays out.
+            with_option |= members.filtered(lambda line: all(
+                other == section or other.twp_option_mode == "included" or other.twp_option_chosen
+                for other in line._twp_enclosing_sections()
+            ))
+            rows.append({
+                "name": (section.name or "").splitlines()[0] if section.name else "",
+                "amount": self._twp_amount_total(with_option),
+            })
+        return rows
+
+    def _has_to_be_signed(self):
+        return super()._has_to_be_signed() and not self._twp_needs_choice()
+
+    def _has_to_be_paid(self):
+        return super()._has_to_be_paid() and not self._twp_needs_choice()
 
     # ------------------------------------------------------------
     # Header fields on the form and the documents
@@ -227,5 +374,5 @@ class SaleOrder(models.Model):
 
     def _get_order_lines_to_report(self):
         return super()._get_order_lines_to_report().filtered(
-            lambda line: not line.twp_hide_on_documents
+            lambda line: not line.twp_hide_on_documents and not line.twp_not_chosen
         )

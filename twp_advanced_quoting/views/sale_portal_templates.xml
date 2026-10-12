@@ -18,6 +18,10 @@
             <section t-if="sale_order._twp_show_introduction()" id="twp_introduction" class="mb-4">
                 <div t-field="sale_order.twp_introduction"/>
             </section>
+            <div t-if="sale_order._twp_needs_choice()" id="twp_needs_choice" class="alert alert-info d-print-none" role="status">
+                This quote has options to choose between. Let us know which you would like, and we will
+                send it back to you to accept.
+            </div>
         </xpath>
 
         <xpath expr="//t[@t-set='display_taxes']" position="after">
@@ -88,6 +92,7 @@
                 </td>
                 <td name="twp_td_bundle_name" t-att-class="padding_class">
                     <span t-field="line.name"/>
+                    <t t-call="twp_advanced_quoting.option_note"/>
                 </td>
                 <td t-if="twp_show_code" name="twp_td_code"/>
                 <td name="twp_td_bundle_quantity" class="text-end">
@@ -109,6 +114,28 @@
             <attribute name="t-if"/>
             <attribute name="t-elif">is_section or is_subsection</attribute>
         </xpath>
+        <xpath expr="//tr[@name='tr_section']/td[@name='td_section_name_xs']/span" position="after">
+            <t t-call="twp_advanced_quoting.option_note"/>
+        </xpath>
+        <xpath expr="//tr[@name='tr_section']/td[@name='td_section_name_sm']/span" position="after">
+            <t t-call="twp_advanced_quoting.option_note"/>
+        </xpath>
+        <xpath expr="//tr[@name='tr_section']/td[@name='td_section_name']/span" position="after">
+            <t t-call="twp_advanced_quoting.option_note"/>
+        </xpath>
+        <xpath expr="//td[@name='td_section_group_name']/span" position="after">
+            <t t-call="twp_advanced_quoting.option_note"/>
+        </xpath>
+
+        <!-- Totals, as on the PDF -->
+        <xpath expr="//div[@id='total']" position="attributes">
+            <attribute name="t-if">sale_order._twp_show_totals()</attribute>
+        </xpath>
+        <xpath expr="//div[@id='total']/div/t[@t-call='sale.sale_order_portal_content_totals_table']" position="after">
+            <t t-call="twp_advanced_quoting.option_totals">
+                <t t-set="order" t-value="sale_order"/>
+            </t>
+        </xpath>
         <xpath expr="//td[@name='td_section_group_quantity']/span" position="attributes">
             <attribute name="t-if">not line.twp_is_bundle</attribute>
         </xpath>
@@ -129,6 +156,13 @@
              child is whichever of the two is installed. -->
         <xpath expr="//tr[@name='tr_product']/td[@name='td_product_quantity']/*[1]" position="attributes">
             <attribute name="t-if">not twp_per_bundle</attribute>
+        </xpath>
+    </template>
+
+    <!-- The sidebar's total follows the page's. -->
+    <template id="sale_order_portal_template" inherit_id="sale.sale_order_portal_template">
+        <xpath expr="//h2[@t-field='sale_order.amount_total']" position="before">
+            <t t-elif="not sale_order._twp_show_totals()"/>
         </xpath>
     </template>
 
