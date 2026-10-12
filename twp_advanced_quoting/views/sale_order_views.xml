@@ -54,7 +54,7 @@
             </xpath>
             <!-- Inside a bundle only the quantity per bundle is typed (D15). -->
             <xpath expr="//field[@name='order_line']/list/field[@name='product_uom_qty']" position="before">
-                <field name="twp_qty_per_bundle" optional="show" invisible="display_type or not twp_in_bundle" width="88px"/>
+                <field name="twp_qty_per_bundle" optional="show" invisible="display_type or not twp_in_bundle" width="80px"/>
             </xpath>
             <xpath expr="//field[@name='order_line']/list/field[@name='product_uom_qty']" position="attributes">
                 <attribute name="readonly" add="twp_in_bundle" separator=" or "/>
@@ -66,10 +66,10 @@
                        invisible="twp_option_mode != 'alternative' or not display_type"
                        readonly="twp_option_mode != 'alternative' or not display_type"
                        placeholder="One set"/>
-                <field name="twp_option_label" widget="badge" optional="show" width="90px"
+                <field name="twp_option_label" widget="badge" optional="show" width="80px"
                        invisible="not twp_option_label"
                        decoration-success="twp_option_chosen" decoration-muted="twp_not_chosen"/>
-                <field name="twp_bundle_qty" string="Bundle Qty" optional="show" width="88px"
+                <field name="twp_bundle_qty" string="Bundle Qty" optional="show" width="80px"
                        invisible="not twp_is_bundle" readonly="not twp_is_bundle"/>
             </xpath>
             <xpath expr="//field[@name='order_line']/form//div[@name='ordered_qty']/field[@name='product_uom_qty']" position="attributes">
@@ -86,7 +86,7 @@
                  time. A section's row leaves the cell to its title. -->
             <xpath expr="//field[@name='order_line']/list/field[@name='sequence']" position="after">
                 <field name="twp_hide_on_documents" string="Print" widget="twp_print_toggle" optional="show"
-                       invisible="display_type" width="32px"/>
+                       invisible="display_type" width="24px"/>
             </xpath>
         </field>
     </record>
