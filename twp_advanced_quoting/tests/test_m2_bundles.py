@@ -107,6 +107,8 @@ class TestBundleEditor(BundleCase, TransactionCase):
         with Form(order) as form:
             with form.order_line.edit(2) as bracket:
                 bracket.twp_qty_per_bundle = 4
+            # The order's onchange runs once the line is left.
+            with form.order_line.edit(2) as bracket:
                 self.assertEqual(bracket.product_uom_qty, 20.0)
         self.assertEqual(self.line(order, self.bracket).product_uom_qty, 20.0)
 
@@ -237,6 +239,7 @@ class TestBundleTemplate(BundleCase, TransactionCase):
     """A quotation template carries a bundle, its quantities per bundle, and the hide flags."""
 
     def test_template(self):
+        self.env.user.group_ids += self.env.ref("sale_management.group_sale_order_template")
         template = self.env["sale.order.template"].create({
             "name": "TWP Heater package template",
             "sale_order_template_line_ids": [

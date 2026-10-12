@@ -8,6 +8,8 @@ class TestQuoteNumbers(TransactionCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
+        # These are about quote numbers alone; order numbers have their own tests.
+        cls.env.company.twp_number_orders = False
         cls.partner = cls.env["res.partner"].create({"name": "TWP Numbers Customer"})
 
     def settings(self, **values):

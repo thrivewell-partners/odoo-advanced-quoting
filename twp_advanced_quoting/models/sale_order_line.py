@@ -107,7 +107,9 @@ class SaleOrderLine(models.Model):
     def _compute_twp_in_bundle(self):
         self._twp_refresh_parents()
         for line in self:
-            line.twp_in_bundle = bool(line._twp_bundle())
+            # A new line's own onchange sees an order whose lines don't include it yet, and
+            # Odoo's parent_id can't be worked out there; the order's onchange sets it right.
+            line.twp_in_bundle = line in line.order_id.order_line and bool(line._twp_bundle())
 
     def _twp_option_section(self):
         self.ensure_one()

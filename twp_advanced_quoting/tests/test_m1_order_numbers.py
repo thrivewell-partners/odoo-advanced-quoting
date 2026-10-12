@@ -15,7 +15,7 @@ class TestOrderAndInvoiceNumbers(TransactionCase):
         })
         # A sales journal with nothing in it yet, as at a go-live.
         cls.journal = cls.env["account.journal"].create({
-            "name": "TWP Radiant Sales", "code": "TWPRS", "type": "sale",
+            "name": "TWP Test Sales", "code": "TWPTS", "type": "sale",
         })
 
     def setUp(self):
