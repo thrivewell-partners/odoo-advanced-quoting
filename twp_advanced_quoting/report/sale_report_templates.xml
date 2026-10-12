@@ -7,6 +7,77 @@
                 <t t-out="doc.twp_document_style_id.title_word"/> #
             </span>
         </xpath>
+
+        <!-- Header fields, then the introduction, above the lines -->
+        <xpath expr="//div[@id='informations']" position="after">
+            <t t-set="twp_header_fields" t-value="doc._twp_header_fields()"/>
+            <div t-if="twp_header_fields" class="row mb-4" id="twp_informations">
+                <div t-foreach="twp_header_fields" t-as="twp_field" class="col" t-att-name="twp_field['name']">
+                    <strong t-out="twp_field['label']">Job Name</strong>
+                    <div t-out="twp_field['value']">Main Street School</div>
+                </div>
+            </div>
+            <div t-if="doc._twp_show_introduction()" class="mb-4" name="twp_introduction">
+                <div t-field="doc.twp_introduction"/>
+            </div>
+        </xpath>
+
+        <!-- The style's line numbers and code column -->
+        <xpath expr="//t[@t-set='display_taxes']" position="after">
+            <t t-set="twp_show_numbers" t-value="doc.twp_document_style_id.show_line_numbers"/>
+            <t t-set="twp_show_code" t-value="doc.twp_document_style_id.show_code_column"/>
+            <t t-set="twp_numbers" t-value="doc._twp_line_numbers(lines_to_report) if twp_show_numbers else {}"/>
+        </xpath>
+        <xpath expr="//th[@name='th_description']" position="before">
+            <th t-if="twp_show_numbers" name="twp_th_line_number" class="text-end">
+                <t t-set="colspan_count" t-value="colspan_count + 1"/>
+                #
+            </th>
+        </xpath>
+        <xpath expr="//th[@name='th_description']" position="after">
+            <th t-if="twp_show_code" name="twp_th_code" class="text-start text-nowrap">
+                <t t-set="colspan_count" t-value="colspan_count + 1"/>
+                <t t-out="doc.twp_document_style_id.code_column_label">Model No.</t>
+            </th>
+        </xpath>
+
+        <!-- Hide Price on one line: the row prints as if its section hid prices, and the
+             section's own setting comes back on the next row. -->
+        <xpath expr="//t[@t-if='is_section']/t[@t-set='collapse_prices']" position="after">
+            <t t-set="twp_section_collapse_prices" t-value="collapse_prices"/>
+            <t t-set="twp_group_collapse_prices" t-value="collapse_prices"/>
+        </xpath>
+        <xpath expr="//t[@t-elif='is_subsection']/t[@t-set='collapse_prices']" position="after">
+            <t t-set="collapse_prices" t-value="twp_section_collapse_prices or line.collapse_prices"/>
+            <t t-set="twp_group_collapse_prices" t-value="collapse_prices"/>
+        </xpath>
+        <xpath expr="//tr[@name='tr_combo']/td[@name='td_combo_name']" position="before">
+            <t t-set="collapse_prices" t-value="twp_group_collapse_prices"/>
+        </xpath>
+        <xpath expr="//tr[@name='tr_product']/td[@name='td_product_name']" position="before">
+            <t t-set="collapse_prices" t-value="twp_group_collapse_prices or line.twp_hide_price"/>
+            <td t-if="twp_show_numbers" name="twp_td_line_number" class="text-end">
+                <span t-out="twp_numbers.get(line.id, '')">1</span>
+            </td>
+        </xpath>
+        <xpath expr="//tr[@name='tr_product']/td[@name='td_product_name']/span" position="attributes">
+            <attribute name="t-if">not twp_show_code</attribute>
+        </xpath>
+        <xpath expr="//tr[@name='tr_product']/td[@name='td_product_name']/span" position="after">
+            <span t-if="twp_show_code" t-out="line._twp_name_without_code()" t-options="{'widget': 'text'}">Bacon Burger</span>
+        </xpath>
+        <xpath expr="//tr[@name='tr_product']/td[@name='td_product_name']" position="after">
+            <td t-if="twp_show_code" name="twp_td_code" class="text-nowrap">
+                <span t-out="line._twp_code()">FURN_0001</span>
+            </td>
+        </xpath>
+        <xpath expr="//tr[@name='tr_section_group']/td[@name='td_section_group_name']" position="before">
+            <td t-if="twp_show_numbers" name="twp_td_line_number"/>
+        </xpath>
+        <xpath expr="//tr[@name='tr_section_group']/td[@name='td_section_group_name']" position="after">
+            <td t-if="twp_show_code" name="twp_td_code"/>
+        </xpath>
+
         <xpath expr="//div[@name='so_total_summary']" position="attributes">
             <attribute name="t-if">doc.twp_document_style_id.totals_mode != 'hidden'</attribute>
         </xpath>

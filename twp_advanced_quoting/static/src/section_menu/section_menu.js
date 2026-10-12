@@ -9,7 +9,10 @@ patch(SaleOrderLineListRenderer.prototype, {
             "twp_bundle_qty",
             "twp_option_mode",
             "twp_option_group",
-            "twp_option_chosen"
+            "twp_option_chosen",
+            "twp_qty_per_bundle",
+            "twp_hide_on_documents",
+            "twp_hide_price"
         );
     },
 

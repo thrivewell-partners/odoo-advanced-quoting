@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="res_config_settings_view_form" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.twp_advanced_quoting</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="sale.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//block[@name='quotation_order_setting_container']" position="after">
+                <block title="Advanced Quoting" name="twp_advanced_quoting_setting_container">
+                    <setting id="twp_quote_numbers" company_dependent="1"
+                             string="Quote Numbers"
+                             help="New quotes are numbered with this prefix. Numbers already given stay as they are.">
+                        <div class="content-group mt16">
+                            <div class="row">
+                                <label for="twp_quote_prefix" string="Prefix" class="col-lg-4 o_light_label"/>
+                                <field name="twp_quote_prefix" placeholder="REDQ"/>
+                            </div>
+                            <div class="row">
+                                <label for="twp_quote_padding" string="Digits" class="col-lg-4 o_light_label"/>
+                                <field name="twp_quote_padding"/>
+                            </div>
+                            <div class="row">
+                                <label for="twp_quote_next_number" string="Next number" class="col-lg-4 o_light_label"/>
+                                <field name="twp_quote_next_number"/>
+                            </div>
+                        </div>
+                    </setting>
+                    <setting id="twp_header_fields" company_dependent="1"
+                             string="Quote Fields"
+                             help="Fields on the quote, printed above the lines when filled in. Turn each on or off, and name it as your customers know it.">
+                        <div class="content-group mt16">
+                            <div class="row">
+                                <field name="twp_job_name_enabled" class="col-auto"/>
+                                <field name="twp_job_name_label" class="col" readonly="not twp_job_name_enabled"/>
+                            </div>
+                            <div class="row">
+                                <field name="twp_ship_via_enabled" class="col-auto"/>
+                                <field name="twp_ship_via_label" class="col" readonly="not twp_ship_via_enabled"/>
+                            </div>
+                            <div class="row">
+                                <field name="twp_fob_enabled" class="col-auto"/>
+                                <field name="twp_fob_label" class="col" readonly="not twp_fob_enabled"/>
+                            </div>
+                            <div class="row">
+                                <field name="twp_freight_enabled" class="col-auto"/>
+                                <field name="twp_freight_label" class="col" readonly="not twp_freight_enabled"/>
+                            </div>
+                            <div class="row">
+                                <field name="twp_lead_time_enabled" class="col-auto"/>
+                                <field name="twp_lead_time_label" class="col" readonly="not twp_lead_time_enabled"/>
+                            </div>
+                        </div>
+                    </setting>
+                    <setting id="twp_introduction" company_dependent="1"
+                             help="Printed above the lines. A quotation template can carry its own.">
+                        <field name="twp_introduction_enabled"/>
+                        <div class="content-group mt16" invisible="not twp_introduction_enabled">
+                            <field name="twp_introduction_default" placeholder="Here is the quote you requested."/>
+                        </div>
+                    </setting>
+                    <setting id="twp_document_styles" string="Document Styles"
+                             help="How quotes are printed: title, totals, line numbers and the code column.">
+                        <div class="content-group">
+                            <div class="mt8">
+                                <button name="%(twp_document_style_action)d" icon="oi-arrow-right" type="action" string="Document Styles" class="btn-link"/>
+                            </div>
+                        </div>
+                    </setting>
+                </block>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

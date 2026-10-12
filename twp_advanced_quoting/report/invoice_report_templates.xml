@@ -1,9 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- A bundle's summary row carries its package count and package price in the
-         quantity and unit price columns, like any product row. -->
     <template id="report_invoice_document" inherit_id="account.report_invoice_document">
+        <!-- Job Name, carried from the order -->
+        <xpath expr="//div[@id='informations']" position="attributes">
+            <attribute name="t-if" add="or o._twp_header_fields()" separator=" "/>
+        </xpath>
+        <xpath expr="//div[@id='informations']" position="inside">
+            <div t-foreach="o._twp_header_fields()" t-as="twp_field" class="col" t-att-name="twp_field['name']">
+                <strong t-out="twp_field['label']">Job Name</strong>
+                <div t-out="twp_field['value']">Main Street School</div>
+            </div>
+        </xpath>
+
+        <!-- Hide Price on one line -->
+        <xpath expr="//t[@name='account_invoice_line_accountable']/td[@name='account_invoice_line_name']" position="before">
+            <t t-set="hide_prices" t-value="line.twp_hide_price"/>
+        </xpath>
+        <xpath expr="//t[@name='account_invoice_line_accountable']/td[@name='td_discount']/span" position="attributes">
+            <attribute name="t-if">not hide_prices</attribute>
+        </xpath>
+
+        <!-- A bundle's summary row carries its package count and package price in the
+             quantity and unit price columns, like any product row. -->
         <xpath expr="//t[@t-foreach='grouped_lines']/t[@t-else]/t[@t-set='line_colspan']" position="attributes">
             <attribute name="t-value">1 if grouped_line.get('twp_bundle_qty') else 3 + (1 if display_discount else 0) + (1 if display_taxes and not grouped_line.get('taxes') else 0)</attribute>
         </xpath>

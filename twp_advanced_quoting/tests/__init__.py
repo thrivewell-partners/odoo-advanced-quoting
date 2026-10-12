@@ -1,3 +1,5 @@
 from . import test_m0_bundle_qty
 from . import test_m0_exclusion
 from . import test_m0_invoice
+from . import test_m1_documents
+from . import test_m1_quote_numbers

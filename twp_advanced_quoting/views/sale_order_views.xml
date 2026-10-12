@@ -6,8 +6,20 @@
         <field name="model">sale.order</field>
         <field name="inherit_id" ref="sale.view_order_form"/>
         <field name="arch" type="xml">
+            <xpath expr="//group[@name='partner_details']" position="inside">
+                <field name="twp_job_name"/>
+            </xpath>
             <xpath expr="//group[@name='order_details']/field[@name='payment_term_id']" position="after">
                 <field name="twp_document_style_id" options="{'no_create': True}"/>
+                <field name="twp_ship_via"/>
+                <field name="twp_fob"/>
+                <field name="twp_freight"/>
+                <field name="twp_lead_time"/>
+            </xpath>
+            <xpath expr="//page[@name='order_lines']" position="after">
+                <page string="Introduction" name="twp_introduction">
+                    <field name="twp_introduction" nolabel="1" placeholder="Printed above the lines. The default is set in Sales Settings."/>
+                </page>
             </xpath>
             <xpath expr="//field[@name='order_line']/list/field[@name='collapse_prices']" position="after">
                 <field name="twp_is_bundle" column_invisible="1"/>
@@ -20,8 +32,31 @@
                 <field name="twp_qty_per_bundle" optional="show" invisible="display_type"/>
             </xpath>
             <xpath expr="//field[@name='order_line']/list/field[@name='price_unit']" position="after">
+                <field name="twp_hide_price" optional="hide" invisible="display_type"/>
                 <field name="twp_hide_on_documents" optional="hide" invisible="display_type"/>
             </xpath>
+        </field>
+    </record>
+
+    <record id="view_order_tree" model="ir.ui.view">
+        <field name="name">sale.order.list.twp_advanced_quoting</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.sale_order_tree"/>
+        <field name="arch" type="xml">
+            <field name="partner_id" position="after">
+                <field name="twp_job_name" optional="show"/>
+            </field>
+        </field>
+    </record>
+
+    <record id="view_sales_order_filter" model="ir.ui.view">
+        <field name="name">sale.order.search.twp_advanced_quoting</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_sales_order_filter"/>
+        <field name="arch" type="xml">
+            <field name="partner_id" position="after">
+                <field name="twp_job_name"/>
+            </field>
         </field>
     </record>
 

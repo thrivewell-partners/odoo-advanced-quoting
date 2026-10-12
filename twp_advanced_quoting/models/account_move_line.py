@@ -8,6 +8,7 @@ class AccountMoveLine(models.Model):
     twp_is_bundle = fields.Boolean(string="Bundle")
     twp_qty_per_bundle = fields.Float(string="Per Bundle", digits="Product Unit")
     twp_hide_on_documents = fields.Boolean(string="Hide on Documents")
+    twp_hide_price = fields.Boolean(string="Hide Price")
 
     def _twp_invoiced_bundle_qty(self, member_lines):
         """How many packages these member lines make, or False when they disagree.

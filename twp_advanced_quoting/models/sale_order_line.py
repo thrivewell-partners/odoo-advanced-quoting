@@ -58,6 +58,10 @@ class SaleOrderLine(models.Model):
         string="Hide on Documents",
         help="Counted in the total, never printed on the quote, the portal or the invoice.",
     )
+    twp_hide_price = fields.Boolean(
+        string="Hide Price",
+        help="Printed with its quantity and no price. Its price still counts in the section and the total.",
+    )
 
     # ------------------------------------------------------------
     # Section membership
@@ -156,6 +160,28 @@ class SaleOrderLine(models.Model):
         return result
 
     # ------------------------------------------------------------
+    # Documents
+    # ------------------------------------------------------------
+
+    def _twp_code(self):
+        self.ensure_one()
+        return self.product_id.default_code or ""
+
+    def _twp_name_without_code(self):
+        """The description with the product's internal reference taken off its front.
+
+        Odoo writes new lines as "[CODE] Name". When the code prints in its own column it
+        would otherwise print twice.
+        """
+        self.ensure_one()
+        code = self._twp_code()
+        name = self.name or ""
+        prefix = f"[{code}]"
+        if code and name.startswith(prefix):
+            return name[len(prefix):].lstrip()
+        return name
+
+    # ------------------------------------------------------------
     # Invoicing
     # ------------------------------------------------------------
 
@@ -165,5 +191,6 @@ class SaleOrderLine(models.Model):
             twp_is_bundle=self.twp_is_bundle,
             twp_qty_per_bundle=self.twp_qty_per_bundle,
             twp_hide_on_documents=self.twp_hide_on_documents,
+            twp_hide_price=self.twp_hide_price,
         )
         return values

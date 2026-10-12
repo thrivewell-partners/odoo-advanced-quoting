@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- The customer's online quote follows the PDF: header fields, introduction, Hide Price,
+         and the style's line numbers and code column. -->
+    <template id="sale_order_portal_content" inherit_id="sale.sale_order_portal_content">
+        <xpath expr="//tbody[@id='sale_info_table']" position="inside">
+            <tr t-foreach="sale_order._twp_header_fields()" t-as="twp_field" t-att-name="twp_field['name']">
+                <th class="ps-0 pb-0"><t t-out="twp_field['label']"/>:</th>
+                <td class="w-100 pb-0 text-wrap"><span t-out="twp_field['value']"/></td>
+            </tr>
+        </xpath>
+        <xpath expr="//section[@id='details']" position="before">
+            <section t-if="sale_order._twp_show_introduction()" id="twp_introduction" class="mb-4">
+                <div t-field="sale_order.twp_introduction"/>
+            </section>
+        </xpath>
+
+        <xpath expr="//t[@t-set='display_taxes']" position="after">
+            <t t-set="twp_show_numbers" t-value="sale_order.twp_document_style_id.show_line_numbers"/>
+            <t t-set="twp_show_code" t-value="sale_order.twp_document_style_id.show_code_column"/>
+            <t t-set="twp_numbers" t-value="sale_order._twp_line_numbers(lines_to_report) if twp_show_numbers else {}"/>
+            <t t-set="twp_extra_columns" t-value="(1 if twp_show_numbers else 0) + (1 if twp_show_code else 0)"/>
+        </xpath>
+        <xpath expr="//th[@id='product_name_header']" position="before">
+            <th t-if="twp_show_numbers" class="text-end" id="twp_line_number_header">#</th>
+        </xpath>
+        <xpath expr="//th[@id='product_name_header']" position="after">
+            <th t-if="twp_show_code" class="text-start text-nowrap" id="twp_code_header">
+                <t t-out="sale_order.twp_document_style_id.code_column_label"/>
+            </th>
+        </xpath>
+        <xpath expr="//tr[@name='tr_section']/t[@t-set='section_name_colspan']" position="attributes">
+            <attribute name="t-value">3 + (1 if display_discount else 0) + (1 if display_taxes else 0) + twp_extra_columns</attribute>
+        </xpath>
+
+        <xpath expr="//t[@t-if='is_section']/t[@t-set='collapse_prices']" position="after">
+            <t t-set="twp_group_collapse_prices" t-value="collapse_prices"/>
+        </xpath>
+        <xpath expr="//t[@t-elif='is_subsection']/t[@t-set='collapse_prices']" position="after">
+            <t t-set="twp_group_collapse_prices" t-value="collapse_prices"/>
+        </xpath>
+        <xpath expr="//tr[@name='tr_combo']/td[@name='td_combo_name']" position="before">
+            <t t-set="collapse_prices" t-value="twp_group_collapse_prices"/>
+            <td t-if="twp_show_numbers" name="twp_td_line_number"/>
+        </xpath>
+        <xpath expr="//tr[@name='tr_combo']/td[@name='td_combo_name']" position="after">
+            <td t-if="twp_show_code" name="twp_td_code"/>
+        </xpath>
+        <xpath expr="//tr[@name='tr_product']/td[@name='td_product_name']" position="before">
+            <t t-set="collapse_prices" t-value="twp_group_collapse_prices or line.twp_hide_price"/>
+            <td t-if="twp_show_numbers" name="twp_td_line_number" class="text-end">
+                <span t-out="twp_numbers.get(line.id, '')"/>
+            </td>
+        </xpath>
+        <xpath expr="//span[@name='span_product_name']" position="attributes">
+            <attribute name="t-if">not twp_show_code</attribute>
+        </xpath>
+        <xpath expr="//span[@name='span_product_name']" position="after">
+            <span t-if="twp_show_code" t-out="line._twp_name_without_code()" t-options="{'widget': 'text'}"/>
+        </xpath>
+        <xpath expr="//tr[@name='tr_product']/td[@name='td_product_name']" position="after">
+            <td t-if="twp_show_code" name="twp_td_code" class="text-nowrap">
+                <span t-out="line._twp_code()"/>
+            </td>
+        </xpath>
+        <xpath expr="//tr[@name='tr_section_group']/td[@name='td_section_group_name']" position="before">
+            <td t-if="twp_show_numbers" name="twp_td_line_number"/>
+        </xpath>
+        <xpath expr="//tr[@name='tr_section_group']/td[@name='td_section_group_name']" position="after">
+            <td t-if="twp_show_code" name="twp_td_code"/>
+        </xpath>
+    </template>
+
+</odoo>
