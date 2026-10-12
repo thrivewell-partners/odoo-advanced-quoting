@@ -20,6 +20,10 @@
         <xpath expr="//t[@name='account_invoice_line_accountable']/td[@name='td_discount']/span" position="attributes">
             <attribute name="t-if">not hide_prices</attribute>
         </xpath>
+        <!-- The tax label still prints, as it does on the quote. -->
+        <xpath expr="//t[@name='account_invoice_line_accountable']/td[@name='td_taxes']/span" position="attributes">
+            <attribute name="t-if">not hide_prices or line.twp_hide_price</attribute>
+        </xpath>
 
         <!-- A bundle's summary row carries its package count and package price in the
              quantity and unit price columns, like any product row. -->

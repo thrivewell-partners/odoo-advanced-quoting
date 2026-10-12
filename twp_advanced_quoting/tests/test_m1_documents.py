@@ -193,7 +193,11 @@ class TestInvoiceDocument(DocumentCase, TransactionCase):
         heater = self.row(page, "TWP Heater")
         self.assertTrue(heater)
         self.assertNotIn("1,000.00", " ".join(heater))
-        self.assertIn("40.00", " ".join(self.row(page, "TWP Bracket")))
+        bracket = self.row(page, "TWP Bracket")
+        self.assertIn("40.00", " ".join(bracket))
+        # Description, quantity, unit price, taxes, amount: the tax label still prints.
+        self.assertTrue(bracket[3])
+        self.assertEqual(heater[3], bracket[3])
         # Only the order's header field travels; the shipping fields stay on the order.
         self.assertNotIn("Best Way", page)
 
