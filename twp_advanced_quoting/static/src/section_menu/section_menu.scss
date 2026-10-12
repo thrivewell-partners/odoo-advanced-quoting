@@ -70,6 +70,17 @@ table.o_section_and_note_list_view {
         text-align: center;
     }
 
+    // Tight enough for Alternative and Not chosen in a narrow column.
+    td[name="twp_option_label"] {
+        padding-left: .25rem;
+        padding-right: .25rem;
+
+        .badge {
+            padding-left: .4em;
+            padding-right: .4em;
+        }
+    }
+
     // The print column is headed by an eye, to stay narrow; its name shows in the column chooser.
     th[data-name="twp_hide_on_documents"] {
         font-size: 0;
