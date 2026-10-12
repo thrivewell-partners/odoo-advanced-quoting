@@ -231,11 +231,7 @@ class TestItemizedRule(StyleCase, TransactionCase):
         self.assertIn("Option 2 is an alternative.", order.twp_style_issues)
         order.twp_allow_options = True
         self.assertFalse(order.twp_style_issues)
-        self.env.flush_all()
-        self.env.cr.precommit.run()
-        order.invalidate_recordset(["message_ids"])
-        tracked = order.message_ids.tracking_value_ids.field_id.mapped("name")
-        self.assertIn("twp_allow_options", tracked)
+        self.assertIn("Alternatives and add-ons allowed", order.message_ids[0].body)
         # Still itemized: an option's lines keep their prices.
         order.order_line.filtered(lambda line: line.product_id == self.option_two).twp_hide_price = True
         self.assertIn("hides its price.", order.twp_style_issues)

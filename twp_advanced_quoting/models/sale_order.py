@@ -34,7 +34,7 @@ class SaleOrder(models.Model):
     twp_can_change_style = fields.Boolean(compute="_compute_twp_can_change_style")
     twp_allow_options = fields.Boolean(
         string="Allow Alternatives",
-        tracking=True,
+        copy=False,
         help="Let this itemized quote carry alternatives and add-ons. Every line in them still "
              "prints with its own price.",
     )
@@ -130,13 +130,24 @@ class SaleOrder(models.Model):
         orders = super().create(vals_list)
         for order, vals in zip(orders, vals_list):
             order._twp_check_style_rights(vals)
+            if vals.get("twp_allow_options"):
+                order._twp_log_allow_options()
         return orders
 
     def write(self, vals):
+        allowing = self.filtered(lambda order: not order.twp_allow_options) if vals.get("twp_allow_options") else self.browse()
         result = super().write(vals)
         if "twp_document_style_id" in vals or vals.get("twp_allow_options"):
             self._twp_check_style_rights(vals)
+        allowing._twp_log_allow_options()
         return result
+
+    def _twp_log_allow_options(self):
+        """Each use of the override is in the chatter (D7)."""
+        for order in self:
+            order.message_post(body=_(
+                "Alternatives and add-ons allowed on this itemized quote. Every line in them still prints with its price."
+            ))
 
     @api.depends(
         "twp_document_style_id.structure",
