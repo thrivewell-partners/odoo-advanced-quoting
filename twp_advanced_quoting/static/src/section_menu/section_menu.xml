@@ -3,7 +3,7 @@
 
     <t t-inherit="sale.ListRenderer.RecordRow" t-inherit-mode="extension">
         <t t-name="composition_button" position="after">
-            <DropdownItem onSelected="() => this.twpToggleBundle(record)">
+            <DropdownItem t-if="this.twpCanSetBundle(record)" onSelected="() => this.twpToggleBundle(record)">
                 <i class="me-1 fa fa-fw fa-cube"/>
                 <span t-if="record.data.twp_is_bundle">Unset Bundle</span>
                 <span t-else="">Set Bundle</span>
@@ -21,13 +21,13 @@
                     <span t-else="">Mark Chosen</span>
                 </DropdownItem>
                 <DropdownItem
-                    t-if="record.data.twp_option_mode !== 'alternative'"
+                    t-if="record.data.twp_option_mode !== 'alternative' and this.twpCanSetOption(record)"
                     onSelected="() => this.twpSetOptionMode(record, 'alternative')"
                 >
                     <i class="me-1 fa fa-fw fa-random"/><span>Set Alternative</span>
                 </DropdownItem>
                 <DropdownItem
-                    t-if="record.data.twp_option_mode !== 'addon'"
+                    t-if="record.data.twp_option_mode !== 'addon' and this.twpCanSetOption(record)"
                     onSelected="() => this.twpSetOptionMode(record, 'addon')"
                 >
                     <i class="me-1 fa fa-fw fa-plus-square-o"/><span>Set Add-on</span>

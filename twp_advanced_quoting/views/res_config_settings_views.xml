@@ -109,11 +109,35 @@
                              help="Alternatives and add-ons stay out of the total until chosen. Confirming a quote that has them asks which the customer chose; the rest drop to quantity 0 and stay on the order as a record.">
                         <field name="twp_ask_options_on_confirm"/>
                     </setting>
-                    <setting id="twp_document_styles" string="Document Styles"
-                             help="How quotes are printed: title, totals, line numbers and the code column.">
-                        <div class="content-group">
+                    <setting id="twp_document_styles" company_dependent="1" string="Document Styles"
+                             help="A quote takes the style its customer's tags give it: itemized or grouped, its title, totals and columns. Customers with none of the styles' tags get the default.">
+                        <div class="content-group mt16">
+                            <div class="row">
+                                <label for="twp_default_document_style_id" string="Default style" class="col-lg-4 o_light_label"/>
+                                <field name="twp_default_document_style_id" options="{'no_create': True}"/>
+                            </div>
+                            <div class="row mt8">
+                                <field name="twp_reps_change_style" class="col-auto"/>
+                                <label for="twp_reps_change_style" string="Salespeople can change a quote's style" class="col o_light_label"/>
+                            </div>
+                            <div class="row mt8">
+                                <label for="twp_allow_options_by" string="Alternatives on itemized quotes" class="col-lg-4 o_light_label"/>
+                                <field name="twp_allow_options_by"/>
+                            </div>
                             <div class="mt8">
                                 <button name="%(twp_document_style_action)d" icon="oi-arrow-right" type="action" string="Document Styles" class="btn-link"/>
+                            </div>
+                        </div>
+                    </setting>
+                    <setting id="twp_estimates" company_dependent="1" string="Budget Estimates"
+                             help="A quote marked as a budget estimate prints this title and note. The customer can't accept it online.">
+                        <div class="content-group mt16">
+                            <div class="row">
+                                <label for="twp_estimate_title" string="Title" class="col-lg-4 o_light_label"/>
+                                <field name="twp_estimate_title" placeholder="Estimate"/>
+                            </div>
+                            <div class="mt8">
+                                <field name="twp_estimate_note" placeholder="Budget pricing"/>
                             </div>
                         </div>
                     </setting>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- The quote's file name is its title, number and Job Name (D14). The Print menu and the
+         emailed PDF read it here; the customer's download reads the same method. Loaded again
+         whenever Sales is upgraded, and put back to Odoo's own on uninstall. -->
+    <record id="sale.action_report_saleorder" model="ir.actions.report">
+        <field name="print_report_name">object._get_report_base_filename()</field>
+    </record>
+
+</odoo>

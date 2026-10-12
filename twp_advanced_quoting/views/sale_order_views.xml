@@ -13,12 +13,24 @@
             <xpath expr="//header/button[@name='action_confirm'][2]" position="attributes">
                 <attribute name="context">{'validate_analytic': True, 'twp_ask_options': True}</attribute>
             </xpath>
+            <!-- What keeps an itemized quote from being printed, sent or confirmed yet. -->
+            <xpath expr="//sheet" position="before">
+                <div class="alert alert-warning mb-0" role="alert" invisible="not twp_style_issues">
+                    <strong>This quote is itemized:</strong> every line prints with its own price.
+                    Before it can be printed, sent or confirmed:
+                    <field name="twp_style_issues" nolabel="1" readonly="1"/>
+                </div>
+            </xpath>
             <xpath expr="//group[@name='partner_details']" position="inside">
                 <field name="twp_job_name"/>
             </xpath>
             <xpath expr="//group[@name='order_details']/field[@name='payment_term_id']" position="after">
                 <field name="twp_quote_number" invisible="not twp_quote_number or twp_quote_number == name"/>
-                <field name="twp_document_style_id" options="{'no_create': True}"/>
+                <field name="twp_can_change_style" invisible="1"/>
+                <field name="twp_structure" invisible="1"/>
+                <field name="twp_document_style_id" options="{'no_create': True}" readonly="not twp_can_change_style"/>
+                <field name="twp_allow_options" invisible="twp_structure != 'itemized'"/>
+                <field name="twp_is_estimate"/>
                 <field name="twp_ship_via"/>
                 <field name="twp_fob"/>
                 <field name="twp_freight"/>

@@ -27,6 +27,15 @@ class ResConfigSettings(models.TransientModel):
     # Alternatives and add-ons
     twp_ask_options_on_confirm = fields.Boolean(related="company_id.twp_ask_options_on_confirm", readonly=False)
 
+    # Document styles
+    twp_default_document_style_id = fields.Many2one(
+        related="company_id.twp_default_document_style_id", readonly=False
+    )
+    twp_reps_change_style = fields.Boolean(related="company_id.twp_reps_change_style", readonly=False)
+    twp_allow_options_by = fields.Selection(related="company_id.twp_allow_options_by", readonly=False)
+    twp_estimate_title = fields.Char(related="company_id.twp_estimate_title", readonly=False)
+    twp_estimate_note = fields.Html(related="company_id.twp_estimate_note", readonly=False)
+
     # Header fields
     twp_job_name_enabled = fields.Boolean(related="company_id.twp_job_name_enabled", readonly=False)
     twp_job_name_label = fields.Char(related="company_id.twp_job_name_label", readonly=False)

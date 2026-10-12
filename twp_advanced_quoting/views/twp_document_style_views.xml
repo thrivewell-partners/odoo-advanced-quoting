@@ -8,10 +8,13 @@
             <list>
                 <field name="sequence" widget="handle"/>
                 <field name="name"/>
+                <field name="tag_ids" widget="many2many_tags" options="{'color_field': 'color'}"/>
+                <field name="structure"/>
                 <field name="title_word"/>
                 <field name="totals_mode"/>
                 <field name="show_line_numbers"/>
                 <field name="show_code_column"/>
+                <field name="company_id" groups="base.group_multi_company" optional="show"/>
             </list>
         </field>
     </record>
@@ -27,14 +30,30 @@
                         <h1><field name="name" placeholder="e.g. Contractor"/></h1>
                     </div>
                     <group>
+                        <group string="Who It Is For">
+                            <field name="tag_ids" widget="many2many_tags" options="{'color_field': 'color'}" placeholder="e.g. Distributor"/>
+                            <field name="structure" widget="radio"/>
+                            <field name="company_id" groups="base.group_multi_company" options="{'no_create': True}"/>
+                        </group>
                         <group string="Printing">
                             <field name="title_word" placeholder="Quotation"/>
+                            <field name="order_title_word" placeholder="Order"/>
                             <field name="totals_mode"/>
                         </group>
                         <group string="Columns">
                             <field name="show_line_numbers"/>
                             <field name="show_code_column"/>
                             <field name="code_column_label" invisible="not show_code_column"/>
+                            <field name="discount_column"/>
+                            <field name="show_taxes"/>
+                        </group>
+                        <group string="Quote Fields That Print">
+                            <field name="print_job_name"/>
+                            <field name="print_ship_via"/>
+                            <field name="print_fob"/>
+                            <field name="print_freight"/>
+                            <field name="print_lead_time"/>
+                            <field name="print_introduction"/>
                         </group>
                     </group>
                     <field name="active" invisible="1"/>

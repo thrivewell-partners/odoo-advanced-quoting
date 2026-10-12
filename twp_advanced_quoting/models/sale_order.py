@@ -22,7 +22,32 @@ class SaleOrder(models.Model):
     twp_document_style_id = fields.Many2one(
         "twp.document.style",
         string="Document Style",
-        help="How the quote is built and printed.",
+        compute="_compute_twp_document_style_id",
+        store=True,
+        readonly=False,
+        precompute=True,
+        tracking=True,
+        check_company=True,
+        help="How the quote is built and printed, set by the customer's tags.",
+    )
+    twp_structure = fields.Selection(related="twp_document_style_id.structure", string="Structure")
+    twp_can_change_style = fields.Boolean(compute="_compute_twp_can_change_style")
+    twp_allow_options = fields.Boolean(
+        string="Allow Alternatives",
+        tracking=True,
+        help="Let this itemized quote carry alternatives and add-ons. Every line in them still "
+             "prints with its own price.",
+    )
+    twp_is_estimate = fields.Boolean(
+        string="Budget Estimate",
+        tracking=True,
+        help="Printed as an estimate, with the estimate note from Settings. The customer can't "
+             "accept it online.",
+    )
+    twp_style_issues = fields.Text(
+        string="Style Issues",
+        compute="_compute_twp_style_issues",
+        help="What keeps an itemized quote from being printed, sent or confirmed.",
     )
 
     # Numbers. With separate order numbers on, `name` is the quote number until the order is
@@ -51,6 +76,180 @@ class SaleOrder(models.Model):
         sanitize=False,
         help="The amount, cost and margin of each section, bundle and option, from the lines' own margins.",
     )
+
+    # ------------------------------------------------------------
+    # Document styles
+    # ------------------------------------------------------------
+
+    @api.depends("partner_id", "sale_order_template_id", "company_id")
+    def _compute_twp_document_style_id(self):
+        for order in self:
+            # A confirmed order keeps the style it was quoted in.
+            if order.state not in ("draft", "sent") and order.twp_document_style_id:
+                continue
+            order.twp_document_style_id = order._twp_matched_style() or order.twp_document_style_id
+
+    def _twp_matched_style(self):
+        """The style the customer's tags give, else the template's, else the company default."""
+        self.ensure_one()
+        company = self.company_id or self.env.company
+        return (
+            self.env["twp.document.style"]._twp_match(self.partner_id, company)
+            or self.sale_order_template_id.twp_document_style_id
+            or company.twp_default_document_style_id
+        )
+
+    @api.depends_context("uid")
+    @api.depends("company_id")
+    def _compute_twp_can_change_style(self):
+        manager = self.env.user.has_group("sales_team.group_sale_manager")
+        for order in self:
+            order.twp_can_change_style = manager or (order.company_id or self.env.company).twp_reps_change_style
+
+    def _twp_check_style_rights(self, vals):
+        """A salesperson keeps the style the customer's tags give, and asks before allowing alternatives."""
+        if self.env.su or self.env.user.has_group("sales_team.group_sale_manager"):
+            return
+        for order in self:
+            if (
+                "twp_document_style_id" in vals
+                and not order.twp_can_change_style
+                and order.twp_document_style_id != order._twp_matched_style()
+            ):
+                raise UserError(_(
+                    "Only a Sales administrator can change the document style of %(order)s. "
+                    "Its customer's tags give it %(style)s.",
+                    order=order.name,
+                    style=order._twp_matched_style().display_name or _("no style"),
+                ))
+            if vals.get("twp_allow_options") and order.company_id.twp_allow_options_by == "managers":
+                raise UserError(_("Only a Sales administrator can allow alternatives on an itemized quote."))
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        orders = super().create(vals_list)
+        for order, vals in zip(orders, vals_list):
+            order._twp_check_style_rights(vals)
+        return orders
+
+    def write(self, vals):
+        result = super().write(vals)
+        if "twp_document_style_id" in vals or vals.get("twp_allow_options"):
+            self._twp_check_style_rights(vals)
+        return result
+
+    @api.depends(
+        "twp_document_style_id.structure",
+        "twp_allow_options",
+        "order_line.display_type",
+        "order_line.twp_is_bundle",
+        "order_line.twp_option_mode",
+        "order_line.twp_hide_on_documents",
+        "order_line.twp_hide_price",
+        "order_line.collapse_prices",
+        "order_line.collapse_composition",
+        "order_line.name",
+    )
+    def _compute_twp_style_issues(self):
+        for order in self:
+            issues = order._twp_style_issues()
+            order.twp_style_issues = "\n".join(f"- {issue}" for issue in issues) if issues else False
+
+    def _twp_style_issues(self):
+        """What an itemized quote holds that its style does not allow, one sentence each."""
+        self.ensure_one()
+        if self.twp_document_style_id.structure != "itemized":
+            return []
+        issues = []
+        for line in self.order_line.sorted("sequence"):
+            name = (line.name or "").splitlines()[0] if line.name else line.product_id.display_name
+            if line.display_type in ("line_section", "line_subsection"):
+                if line.twp_is_bundle:
+                    issues.append(_("%s is a bundle.", name))
+                elif line.collapse_composition:
+                    issues.append(_("%s hides its lines.", name))
+                elif line.collapse_prices:
+                    issues.append(_("%s hides its prices.", name))
+                if line.twp_option_mode != "included" and not self.twp_allow_options:
+                    if line.twp_option_mode == "alternative":
+                        issues.append(_("%s is an alternative.", name))
+                    else:
+                        issues.append(_("%s is an add-on.", name))
+            elif not line.display_type and not line._twp_is_special():
+                if line.twp_hide_on_documents:
+                    issues.append(_("%s is hidden on documents.", name))
+                elif line.twp_hide_price:
+                    issues.append(_("%s hides its price.", name))
+        return issues
+
+    def _twp_style_error_message(self):
+        """Why an itemized quote can't be printed, sent or confirmed yet, or an empty string."""
+        self.ensure_one()
+        if self.state not in ("draft", "sent"):
+            return ""
+        issues = self._twp_style_issues()
+        if not issues:
+            return ""
+        message = _(
+            "%(order)s is in the %(style)s style, which prints every line with its own price. "
+            "Before it can be printed, sent or confirmed:\n%(issues)s",
+            order=self.name,
+            style=self.twp_document_style_id.display_name,
+            issues="\n".join(f"- {issue}" for issue in issues),
+        )
+        return message
+
+    def _twp_check_style(self):
+        for order in self:
+            message = order._twp_style_error_message()
+            if message:
+                raise UserError(message)
+
+    def _confirmation_error_message(self):
+        return super()._confirmation_error_message() or self._twp_style_error_message()
+
+    def action_quotation_send(self):
+        self._twp_check_style()
+        return super().action_quotation_send()
+
+    def _twp_title(self):
+        """The title the style gives this quote or order, or False for Odoo's own."""
+        self.ensure_one()
+        if self.state in ("draft", "sent", "cancel"):
+            if self.twp_is_estimate:
+                return self.company_id.twp_estimate_title or _("Estimate")
+            return self.twp_document_style_id.title_word
+        return self.twp_document_style_id.order_title_word
+
+    @api.depends("twp_document_style_id", "twp_is_estimate")
+    def _compute_type_name(self):
+        super()._compute_type_name()
+        for order in self:
+            title = order._twp_title()
+            if title:
+                order.type_name = title
+
+    def _get_report_base_filename(self):
+        """Title, number and Job Name (D14), such as "Proposal - REDQ0001 - Main Street School"."""
+        self.ensure_one()
+        return " - ".join(part for part in (self.type_name, self.name, self.twp_job_name) if part)
+
+    def _twp_show_estimate_note(self):
+        self.ensure_one()
+        return (
+            self.twp_is_estimate
+            and self.state in ("draft", "sent")
+            and not is_html_empty(self.company_id.twp_estimate_note)
+        )
+
+    def _twp_net_prices(self):
+        """Unit prices print with their discount taken off, and no discount column (D9)."""
+        self.ensure_one()
+        return self.twp_document_style_id.discount_column == "net"
+
+    def _twp_show_taxes(self):
+        self.ensure_one()
+        return not self.twp_document_style_id or self.twp_document_style_id.show_taxes
 
     @api.depends("sale_order_template_id")
     def _compute_twp_introduction(self):
@@ -290,11 +489,16 @@ class SaleOrder(models.Model):
             })
         return rows
 
+    def _twp_can_accept_online(self):
+        """A choice still open, an estimate, or an itemized quote that isn't yet: no online accept."""
+        self.ensure_one()
+        return not (self._twp_needs_choice() or self.twp_is_estimate or self._twp_style_error_message())
+
     def _has_to_be_signed(self):
-        return super()._has_to_be_signed() and not self._twp_needs_choice()
+        return super()._has_to_be_signed() and self._twp_can_accept_online()
 
     def _has_to_be_paid(self):
-        return super()._has_to_be_paid() and not self._twp_needs_choice()
+        return super()._has_to_be_paid() and self._twp_can_accept_online()
 
     # ------------------------------------------------------------
     # Header fields on the form and the documents
@@ -318,15 +522,20 @@ class SaleOrder(models.Model):
     def _twp_header_fields(self):
         """[{name, label, value}] for each header field that is turned on and filled in."""
         self.ensure_one()
+        style = self.twp_document_style_id
         return [
             {"name": name, "label": label, "value": self[name]}
             for name, label, enabled in header_field_settings(self.company_id)
-            if enabled and self[name]
+            if enabled and self[name] and style._twp_prints(name.removeprefix("twp_"))
         ]
 
     def _twp_show_introduction(self):
         self.ensure_one()
-        return self.company_id.twp_introduction_enabled and not is_html_empty(self.twp_introduction)
+        return (
+            self.company_id.twp_introduction_enabled
+            and self.twp_document_style_id._twp_prints("introduction")
+            and not is_html_empty(self.twp_introduction)
+        )
 
     def _twp_line_numbers(self, lines):
         """{line id: number} for the numbered rows among the lines to print.

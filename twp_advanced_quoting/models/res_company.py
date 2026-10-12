@@ -41,6 +41,38 @@ class ResCompany(models.Model):
              "Those not chosen drop to quantity 0 and stay on the order as a record.",
     )
 
+    # Document styles
+    twp_default_document_style_id = fields.Many2one(
+        "twp.document.style",
+        string="Default Document Style",
+        help="For a customer with none of the tags the styles list.",
+    )
+    twp_reps_change_style = fields.Boolean(
+        string="Salespeople Change Styles",
+        help="Let any salesperson change a quote's document style. Otherwise only Sales "
+             "administrators can, and a quote keeps the style its customer's tags give it.",
+    )
+    twp_allow_options_by = fields.Selection(
+        [("managers", "Sales administrators"), ("everyone", "Any salesperson")],
+        string="Allow Alternatives On Itemized Quotes",
+        default="managers",
+        required=True,
+        help="Who can let an itemized quote carry alternatives and add-ons. Every line still prints "
+             "with its own price, and each use is recorded in the quote's chatter.",
+    )
+    twp_estimate_title = fields.Char(
+        string="Estimate Title",
+        translate=True,
+        default="Estimate",
+        help="Printed in place of the style's title on a quote marked as a budget estimate.",
+    )
+    twp_estimate_note = fields.Html(
+        string="Estimate Note",
+        translate=True,
+        default=lambda self: self.env._("<p>Budget pricing</p>"),
+        help="Printed above the lines of a budget estimate.",
+    )
+
     twp_job_name_enabled = fields.Boolean(string="Job Name", default=True)
     twp_job_name_label = fields.Char(string="Job Name Label", default="Job Name")
     twp_ship_via_enabled = fields.Boolean(string="Ship Via", default=True)

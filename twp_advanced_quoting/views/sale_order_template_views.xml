@@ -15,6 +15,9 @@
                 <!-- Last, so the bundle's row can keep it. Quantities inside a bundle are per bundle. -->
                 <field name="twp_bundle_qty" optional="show" invisible="not twp_is_bundle" readonly="not twp_is_bundle"/>
             </xpath>
+            <xpath expr="//field[@name='journal_id']" position="after">
+                <field name="twp_document_style_id" options="{'no_create': True}"/>
+            </xpath>
             <xpath expr="//page[@name='terms_and_conditions']" position="before">
                 <page string="Introduction" name="twp_introduction">
                     <field name="twp_introduction" nolabel="1" placeholder="Printed above the lines of a quote made from this template, in place of the default in Sales Settings."/>

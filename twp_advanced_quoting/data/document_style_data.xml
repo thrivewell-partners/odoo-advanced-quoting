@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <!-- The two styles the module ships, with no tags: the admin puts the customer tags on them,
+         such as Distributor and Wholesaler on Itemized. Grouped is the default in Settings. -->
+    <record id="document_style_itemized" model="twp.document.style">
+        <field name="name">Itemized</field>
+        <field name="sequence">10</field>
+        <field name="structure">itemized</field>
+        <field name="totals_mode">full</field>
+        <field name="show_line_numbers" eval="True"/>
+        <field name="show_code_column" eval="True"/>
+        <field name="discount_column">net</field>
+    </record>
+
+    <record id="document_style_grouped" model="twp.document.style">
+        <field name="name">Grouped</field>
+        <field name="sequence">20</field>
+        <field name="structure">grouped</field>
+        <field name="totals_mode">options</field>
+        <field name="show_line_numbers" eval="True"/>
+        <field name="show_code_column" eval="True"/>
+        <field name="discount_column">net</field>
+    </record>
+
+</odoo>

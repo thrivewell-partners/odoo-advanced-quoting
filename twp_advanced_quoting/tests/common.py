@@ -25,6 +25,8 @@ class QuoteCase:
         cls.option_two = cls._product("TWP Option Two", 300)
         cls.fan = cls._product("TWP Fan", 500)
         cls.partner = cls.env["res.partner"].create({"name": "TWP Test Customer"})
+        # The earlier milestones' quotes have no style unless a test gives them one (M4 sets a default).
+        cls.env.company.twp_default_document_style_id = False
 
     @classmethod
     def _product(cls, name, price):

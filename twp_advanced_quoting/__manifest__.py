@@ -1,15 +1,18 @@
 {
     "name": "Advanced Quoting",
     "summary": "Bundles, alternatives kept out of the total, and quote styles set by the customer's tag",
-    "version": "19.0.0.3.0",
+    "version": "19.0.0.4.0",
     "category": "Sales/Sales",
     "license": "LGPL-3",
     "author": "ThriveWell Partners",
     "depends": ["sale_management", "sale_margin"],
     "data": [
         "security/ir.model.access.csv",
+        "security/twp_document_style_security.xml",
         "data/ir_sequence_data.xml",
         "data/product_data.xml",
+        "data/document_style_data.xml",
+        "data/report_data.xml",
         "views/twp_document_style_views.xml",
         "views/twp_option_choice_views.xml",
         "views/res_config_settings_views.xml",
@@ -27,5 +30,6 @@
         ],
     },
     "post_init_hook": "post_init_hook",
+    "uninstall_hook": "uninstall_hook",
     "installable": True,
 }

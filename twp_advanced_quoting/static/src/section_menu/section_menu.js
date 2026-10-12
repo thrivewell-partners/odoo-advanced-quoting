@@ -70,6 +70,22 @@ patch(SaleOrderLineListRenderer.prototype, {
     },
 
     /**
+     * An itemized quote takes no new bundles, and no alternatives or add-ons unless it allows
+     * them. The server warns about any already there, and refuses to print, send or confirm.
+     */
+    twpItemized(record) {
+        return record.model.root?.data?.twp_structure === "itemized";
+    },
+
+    twpCanSetBundle(record) {
+        return record.data.twp_is_bundle || !this.twpItemized(record);
+    },
+
+    twpCanSetOption(record) {
+        return !this.twpItemized(record) || Boolean(record.model.root?.data?.twp_allow_options);
+    },
+
+    /**
      * A chosen alternative unchooses the others in its set, as the server does on save, so
      * the total in the form is right before saving.
      */
