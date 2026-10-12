@@ -54,7 +54,7 @@
                        invisible="twp_option_mode != 'alternative' or not display_type"
                        readonly="twp_option_mode != 'alternative' or not display_type"
                        placeholder="One set"/>
-                <field name="twp_option_label" widget="badge" optional="show"
+                <field name="twp_option_label" widget="badge" optional="show" width="140px"
                        invisible="not twp_option_label"
                        decoration-success="twp_option_chosen" decoration-muted="twp_not_chosen"/>
                 <field name="twp_bundle_qty" string="Bundle Qty" optional="show"
