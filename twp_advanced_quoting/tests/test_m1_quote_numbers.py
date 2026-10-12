@@ -44,9 +44,8 @@ class TestQuoteNumbers(TransactionCase):
         self.assertEqual(order.name, "REDQ0007")
 
     def test_saving_other_settings_leaves_the_sequence(self):
-        sequence = self.env["res.config.settings"]._twp_quote_sequence()
         self.settings(twp_quote_prefix="REDQ", twp_quote_padding=4, twp_quote_next_number=50)
-        self.env["sale.order"].create({"partner_id": self.partner.id})
+        self.assertEqual(self.env["sale.order"].create({"partner_id": self.partner.id}).name, "REDQ0050")
         # Settings opened and saved again: the counter has moved on and must not go back.
         self.env["res.config.settings"].create({}).execute()
-        self.assertEqual(sequence.number_next_actual, 51)
+        self.assertEqual(self.env["sale.order"].create({"partner_id": self.partner.id}).name, "REDQ0051")

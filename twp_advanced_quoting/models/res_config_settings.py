@@ -27,11 +27,14 @@ class ResConfigSettings(models.TransientModel):
     @api.model
     def _twp_quote_sequence(self):
         """The sequence that numbers this company's quotes, as `next_by_code` picks it."""
-        return self.env["ir.sequence"].sudo().search(
+        sequence = self.env["ir.sequence"].sudo().search(
             [("code", "=", "sale.order"), ("company_id", "in", [self.env.company.id, False])],
             order="company_id",
             limit=1,
         )
+        # The next number is read from the database sequence, which moves outside the ORM.
+        sequence.invalidate_recordset(["number_next_actual"])
+        return sequence
 
     @api.model
     def get_values(self):
