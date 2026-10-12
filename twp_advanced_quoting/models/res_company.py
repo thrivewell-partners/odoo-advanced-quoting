@@ -1,5 +1,7 @@
 from odoo import fields, models
 
+ADJUSTMENT_PRODUCT = "twp_advanced_quoting.product_bundle_adjustment"
+
 
 class ResCompany(models.Model):
     _inherit = "res.company"
@@ -14,6 +16,22 @@ class ResCompany(models.Model):
              "A journal that already has invoices carries on with its own pattern.",
     )
     twp_invoice_padding = fields.Integer(string="Invoice Number Digits", default=4)
+
+    twp_bundle_member_qty = fields.Selection(
+        [("total", "Total quantity"), ("per_bundle", "Quantity per bundle")],
+        string="Bundle Member Quantities",
+        default="total",
+        required=True,
+        help="How a bundle's members print their quantities on the quote and the online page: "
+             "the total ordered, or the quantity in one bundle. Invoices print what is billed.",
+    )
+    twp_bundle_adjustment_product_id = fields.Many2one(
+        "product.product",
+        string="Bundle Adjustment Product",
+        domain=[("sale_ok", "=", True), ("type", "=", "service")],
+        help="Added by a bundle's Add Adjustment, for markup or labor that is not a catalog item. "
+             "It is hidden on documents and priced into the bundle.",
+    )
 
     twp_job_name_enabled = fields.Boolean(string="Job Name", default=True)
     twp_job_name_label = fields.Char(string="Job Name Label", default="Job Name")
@@ -31,3 +49,7 @@ class ResCompany(models.Model):
         translate=True,
         help="Printed above the lines of a new quote, unless its quotation template has its own.",
     )
+
+    def _twp_bundle_adjustment_product(self):
+        self.ensure_one()
+        return self.twp_bundle_adjustment_product_id or self.env.ref(ADJUSTMENT_PRODUCT, raise_if_not_found=False)

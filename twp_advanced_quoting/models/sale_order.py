@@ -42,6 +42,13 @@ class SaleOrder(models.Model):
         help="Printed above the lines.",
     )
 
+    twp_section_margins = fields.Html(
+        string="Margins by Section",
+        compute="_compute_twp_section_margins",
+        sanitize=False,
+        help="The amount, cost and margin of each section, bundle and option, from the lines' own margins.",
+    )
+
     @api.depends("sale_order_template_id")
     def _compute_twp_introduction(self):
         for order in self:
@@ -54,6 +61,52 @@ class SaleOrder(models.Model):
             elif is_html_empty(order.twp_introduction):
                 company = order.company_id.with_context(lang=order.partner_id.lang)
                 order.twp_introduction = company.twp_introduction_default
+
+    @api.depends(
+        "order_line.margin",
+        "order_line.price_subtotal",
+        "order_line.sequence",
+        "order_line.display_type",
+        "order_line.name",
+        "order_line.twp_is_bundle",
+        "order_line.twp_bundle_qty",
+    )
+    def _compute_twp_section_margins(self):
+        for order in self:
+            rows = order._twp_section_margin_rows()
+            order.twp_section_margins = self.env["ir.qweb"]._render(
+                "twp_advanced_quoting.section_margins",
+                {"order": order, "rows": rows, "show_bundle_qty": any(row["bundle_qty"] for row in rows)},
+            ) if rows else False
+
+    def _twp_section_margin_rows(self):
+        """[{name, subsection, bundle_qty, amount, cost, margin, margin_percent}] per section."""
+        self.ensure_one()
+        self.order_line._twp_refresh_parents()
+        rows = []
+        for section in self.order_line.filtered(
+            lambda line: line.display_type in ("line_section", "line_subsection") and not line.is_downpayment
+        ):
+            lines = section._get_section_lines().filtered(lambda line: not line._twp_is_special())
+            if not lines:
+                continue
+            amount = sum(lines.mapped("price_subtotal"))
+            margin = sum(lines.mapped("margin"))
+            rows.append({
+                "name": section.name,
+                "subsection": section.display_type == "line_subsection",
+                "bundle_qty": section.twp_bundle_qty if section.twp_is_bundle else False,
+                "amount": amount,
+                "cost": amount - margin,
+                "margin": margin,
+                "margin_percent": margin / amount if amount else False,
+            })
+        return rows
+
+    @api.onchange("order_line")
+    def _twp_onchange_bundles(self):
+        # The editor shows a member's quantity follow its bundle before the quote is saved.
+        self.order_line._twp_sync_bundles()
 
     @property
     def _rec_names_search(self):

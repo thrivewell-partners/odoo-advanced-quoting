@@ -8,6 +8,9 @@
                 <span t-if="record.data.twp_is_bundle">Unset Bundle</span>
                 <span t-else="">Set Bundle</span>
             </DropdownItem>
+            <DropdownItem t-if="record.data.twp_is_bundle" onSelected="() => this.twpAddAdjustment(record)">
+                <i class="me-1 fa fa-fw fa-wrench"/><span>Add Adjustment</span>
+            </DropdownItem>
             <DropdownItem
                 t-if="record.data.twp_option_mode !== 'alternative'"
                 onSelected="() => this.twpSetOptionMode(record, 'alternative')"
@@ -25,6 +28,16 @@
                 onSelected="() => this.twpSetOptionMode(record, 'included')"
             >
                 <i class="me-1 fa fa-fw fa-check"/><span>Include in Total</span>
+            </DropdownItem>
+        </t>
+    </t>
+
+    <t t-inherit="sale_management.ListRenderer.RecordRow" t-inherit-mode="extension">
+        <t t-name="composition_button" position="after">
+            <DropdownItem onSelected="() => this.twpToggleBundle(record)">
+                <i class="me-1 fa fa-fw fa-cube"/>
+                <span t-if="record.data.twp_is_bundle">Unset Bundle</span>
+                <span t-else="">Set Bundle</span>
             </DropdownItem>
         </t>
     </t>

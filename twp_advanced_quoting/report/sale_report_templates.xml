@@ -102,6 +102,60 @@
             <td t-if="twp_show_code" name="twp_td_code"/>
         </xpath>
 
+        <!-- A bundle prints as one row: its packages, the price of one, and its amount. Odoo's
+             own section row follows it as the next branch, so every other section is untouched. -->
+        <xpath expr="//tr[@name='tr_section']" position="before">
+            <tr t-if="(is_section or is_subsection) and line.twp_is_bundle" name="twp_tr_bundle"
+                t-att-class="'fw-bolder o_line_section' if is_section else 'fw-bold o_line_subsection'">
+                <t t-set="twp_bundle_row" t-value="line._twp_bundle_row(price_field)"/>
+                <td t-if="twp_show_numbers" name="twp_td_line_number"/>
+                <td name="twp_td_bundle_name" t-att-class="padding_class">
+                    <span t-field="line.name">Heater package</span>
+                </td>
+                <td t-if="twp_show_code" name="twp_td_code"/>
+                <td name="twp_td_bundle_quantity" class="text-end">
+                    <span class="text-nowrap twp_bundle_qty" t-out="twp_bundle_row['qty']" t-options="{'widget': 'float', 'decimal_precision': 'Product Unit'}">5.00</span>
+                </td>
+                <td name="twp_td_bundle_priceunit" class="text-end text-nowrap">
+                    <span t-if="twp_bundle_row['show_prices'] and twp_bundle_row['package_price'] is not False" class="twp_package_price" t-out="twp_bundle_row['package_price']" t-options="{'widget': 'float', 'decimal_precision': 'Product Price'}">1,260.00</span>
+                </td>
+                <td t-if="display_discount" name="twp_td_bundle_discount"/>
+                <td t-if="display_taxes" name="twp_td_bundle_taxes" class="text-end">
+                    <span t-out="line._twp_section_tax_labels()">Tax 15%</span>
+                </td>
+                <td name="twp_td_bundle_subtotal" class="text-end o_price_total">
+                    <span t-if="twp_bundle_row['show_prices']" class="text-nowrap twp_bundle_amount" t-out="twp_bundle_row['amount']" t-options="{'widget': 'monetary', 'display_currency': doc.currency_id}">6,300.00</span>
+                </td>
+            </tr>
+        </xpath>
+        <xpath expr="//tr[@name='tr_section']" position="attributes">
+            <attribute name="t-if"/>
+            <attribute name="t-elif">is_section or is_subsection</attribute>
+        </xpath>
+
+        <!-- A bundle that hides its composition prints its packages on its summary row. -->
+        <xpath expr="//td[@name='td_section_group_quantity']/span" position="attributes">
+            <attribute name="t-if">not line.twp_is_bundle</attribute>
+        </xpath>
+        <xpath expr="//td[@name='td_section_group_quantity']/span" position="before">
+            <span t-if="line.twp_is_bundle" class="twp_bundle_qty" t-out="line.twp_bundle_qty" t-options="{'widget': 'float', 'decimal_precision': 'Product Unit'}">5.00</span>
+        </xpath>
+        <xpath expr="//td[@name='td_section_group_priceunit']/span" position="attributes">
+            <attribute name="t-out">section_line['price_subtotal'] / line.twp_bundle_qty if line.twp_is_bundle and line.twp_bundle_qty else section_line['price_subtotal']</attribute>
+        </xpath>
+
+        <!-- A member prints its quantity per bundle, if the company prints them that way. -->
+        <xpath expr="//tr[@name='tr_product']/td[@name='td_product_quantity']/span[@t-field='line.product_uom_qty']" position="attributes">
+            <attribute name="t-if">not twp_per_bundle</attribute>
+        </xpath>
+        <xpath expr="//tr[@name='tr_product']/td[@name='td_product_quantity']/span[@t-field='line.product_uom_qty']" position="before">
+            <t t-set="twp_per_bundle" t-value="line._twp_print_per_bundle()"/>
+            <span t-if="twp_per_bundle" t-field="line.twp_qty_per_bundle" class="text-nowrap twp_qty_per_bundle">3</span>
+        </xpath>
+        <xpath expr="//tr[@name='tr_product']/td[@name='td_product_quantity']/span[@t-field='line.product_uom_id']" position="after">
+            <span t-if="twp_per_bundle" class="text-muted small text-nowrap">per package</span>
+        </xpath>
+
         <xpath expr="//div[@name='so_total_summary']" position="attributes">
             <attribute name="t-if">doc.twp_document_style_id.totals_mode != 'hidden'</attribute>
         </xpath>

@@ -18,6 +18,12 @@ class ResConfigSettings(models.TransientModel):
     twp_invoice_prefix = fields.Char(related="company_id.twp_invoice_prefix", readonly=False)
     twp_invoice_padding = fields.Integer(related="company_id.twp_invoice_padding", readonly=False)
 
+    # Bundles
+    twp_bundle_member_qty = fields.Selection(related="company_id.twp_bundle_member_qty", readonly=False)
+    twp_bundle_adjustment_product_id = fields.Many2one(
+        related="company_id.twp_bundle_adjustment_product_id", readonly=False
+    )
+
     # Header fields
     twp_job_name_enabled = fields.Boolean(related="company_id.twp_job_name_enabled", readonly=False)
     twp_job_name_label = fields.Char(related="company_id.twp_job_name_label", readonly=False)

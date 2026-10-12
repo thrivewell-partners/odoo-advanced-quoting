@@ -1,5 +1,6 @@
 from odoo import api, fields, models
 from odoo.tools import float_compare
+from odoo.tools.misc import unique
 
 OPTION_MODES = [
     ("included", "Included"),
@@ -7,14 +8,17 @@ OPTION_MODES = [
     ("addon", "Add-on"),
 ]
 
-# Writing any of these can change a bundle member's ordered quantity.
+# Writing any of these can change a bundle member's ordered quantity, or a bundle's prices.
 BUNDLE_FIELDS = {
     "twp_is_bundle",
     "twp_bundle_qty",
     "twp_qty_per_bundle",
+    "product_uom_qty",
     "sequence",
     "display_type",
     "order_id",
+    "collapse_prices",
+    "collapse_composition",
 }
 
 
@@ -54,6 +58,11 @@ class SaleOrderLine(models.Model):
         digits="Product Unit",
         help="Quantity in one package. The ordered quantity is this times the bundle quantity.",
     )
+    twp_in_bundle = fields.Boolean(
+        string="In a Bundle",
+        compute="_compute_twp_in_bundle",
+        help="Inside a bundle only the quantity per bundle is typed; the ordered quantity follows it.",
+    )
     twp_hide_on_documents = fields.Boolean(
         string="Hide on Documents",
         help="Counted in the total, never printed on the quote, the portal or the invoice.",
@@ -90,6 +99,16 @@ class SaleOrderLine(models.Model):
             return self.browse()
         return self._twp_enclosing_sections().filtered("twp_is_bundle")[:1]
 
+    @api.depends(
+        "order_id.order_line.sequence",
+        "order_id.order_line.display_type",
+        "order_id.order_line.twp_is_bundle",
+    )
+    def _compute_twp_in_bundle(self):
+        self._twp_refresh_parents()
+        for line in self:
+            line.twp_in_bundle = bool(line._twp_bundle())
+
     def _twp_option_section(self):
         self.ensure_one()
         return self._twp_enclosing_sections().filtered(
@@ -108,26 +127,26 @@ class SaleOrderLine(models.Model):
     # Bundle quantities, held on the server
     # ------------------------------------------------------------
 
-    def _twp_sync_bundles(self, rederive=None):
-        """Set each bundle member's ordered quantity from its per-bundle quantity.
+    def _twp_sync_bundles(self):
+        """Hold each bundle member's ordered quantity at its quantity per bundle times the bundle's.
 
-        A member with no per-bundle quantity, or one in `rederive` (its ordered
-        quantity was written directly), keeps the quantity it has and takes its
-        per-bundle quantity from it.
+        Inside a bundle only the quantity per bundle is typed (D15); an ordered quantity written
+        to a member directly is put back. A line that joins a bundle with no quantity per bundle
+        yet reads its ordered quantity as one, so a new line typed as 1 is 1 per bundle. A bundle
+        prints its members without prices, unless it hides its composition altogether.
         """
-        rederive = rederive or self.browse()
         self._twp_refresh_parents()
         digits = self.env["decimal.precision"].precision_get("Product Unit")
-        sync = self.with_context(twp_bundle_sync=True)
-        for line in sync.filtered(lambda l: not l.display_type):
+        for line in self.with_context(twp_bundle_sync=True):
+            if line.display_type:
+                if line.twp_is_bundle and not line.collapse_composition and not line.collapse_prices:
+                    line.collapse_prices = True
+                continue
             bundle = line._twp_bundle()
-            if not bundle or not bundle.twp_bundle_qty:
+            if not bundle:
                 continue
-            if line in rederive or not line.twp_qty_per_bundle:
-                per_bundle = line.product_uom_qty / bundle.twp_bundle_qty
-                if float_compare(per_bundle, line.twp_qty_per_bundle, precision_digits=digits):
-                    line.twp_qty_per_bundle = per_bundle
-                continue
+            if not line.twp_qty_per_bundle:
+                line.twp_qty_per_bundle = line.product_uom_qty
             qty = line.twp_qty_per_bundle * bundle.twp_bundle_qty
             if float_compare(qty, line.product_uom_qty, precision_digits=digits):
                 line.product_uom_qty = qty
@@ -150,13 +169,8 @@ class SaleOrderLine(models.Model):
     def write(self, vals):
         vals = self._twp_bundle_vals(vals)
         result = super().write(vals)
-        if self.env.context.get("twp_bundle_sync"):
-            return result
-        rederive = self.browse()
-        if "product_uom_qty" in vals and "twp_qty_per_bundle" not in vals:
-            rederive = self
-        if BUNDLE_FIELDS & set(vals) or rederive:
-            self.order_id.order_line._twp_sync_bundles(rederive=rederive)
+        if not self.env.context.get("twp_bundle_sync") and BUNDLE_FIELDS & set(vals):
+            self.order_id.order_line._twp_sync_bundles()
         return result
 
     # ------------------------------------------------------------
@@ -180,6 +194,47 @@ class SaleOrderLine(models.Model):
         if code and name.startswith(prefix):
             return name[len(prefix):].lstrip()
         return name
+
+    def _twp_bundle_row(self, price_field):
+        """What a bundle's own row prints: packages, the price of one, and the bundle's amount.
+
+        The amount is the section's total, so members hidden from documents are priced in. A
+        bundle inside a section that hides its prices prints its quantity only.
+        """
+        self.ensure_one()
+        amount = self._get_section_totals(price_field)
+        qty = self.twp_bundle_qty
+        return {
+            "qty": qty,
+            "package_price": amount / qty if qty else False,
+            "amount": amount,
+            "show_prices": not (self.display_type == "line_subsection" and self.parent_id.collapse_prices),
+        }
+
+    def _twp_section_tax_labels(self, attribute="tax_label"):
+        self.ensure_one()
+        taxes = self._get_section_lines().tax_ids
+        return ", ".join(unique(label for label in taxes.mapped(attribute) if label))
+
+    def _twp_print_per_bundle(self):
+        """Whether this member prints its quantity per bundle rather than in total."""
+        self.ensure_one()
+        return self.order_id.company_id.twp_bundle_member_qty == "per_bundle" and bool(self._twp_bundle())
+
+    # ------------------------------------------------------------
+    # Bundle adjustments
+    # ------------------------------------------------------------
+
+    @api.model
+    def default_get(self, fields):
+        values = super().default_get(fields)
+        if self.env.context.get("twp_bundle_adjustment"):
+            product = self.env.company._twp_bundle_adjustment_product()
+            if product and "product_id" in fields:
+                values["product_id"] = product.id
+            if "twp_hide_on_documents" in fields:
+                values["twp_hide_on_documents"] = True
+        return values
 
     # ------------------------------------------------------------
     # Invoicing

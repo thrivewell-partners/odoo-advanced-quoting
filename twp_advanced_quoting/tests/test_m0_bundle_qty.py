@@ -38,12 +38,14 @@ class TestBundleQuantities(QuoteCase, TransactionCase):
         self.assertEqual(self.quantities(order), [5.0, 20.0, 5.0])
 
     def test_ordered_quantity_written_directly(self):
+        # D15: inside a bundle only the quantity per bundle is typed, so this is put back.
         order = self.make_order()
         heater = self.line(order, self.heater)
         heater.product_uom_qty = 10
-        self.assertEqual(heater.twp_qty_per_bundle, 2.0)
+        self.assertEqual(heater.twp_qty_per_bundle, 1.0)
+        self.assertEqual(heater.product_uom_qty, 5.0)
         self.section(order, "Heater package").twp_bundle_qty = 6
-        self.assertEqual(heater.product_uom_qty, 12.0)
+        self.assertEqual(heater.product_uom_qty, 6.0)
 
     def test_member_added_later(self):
         order = self.make_order(bundle_only=True)

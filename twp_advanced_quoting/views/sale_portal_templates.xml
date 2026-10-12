@@ -74,6 +74,56 @@
         <xpath expr="//tr[@name='tr_section_group']/td[@name='td_section_group_name']" position="after">
             <td t-if="twp_show_code" name="twp_td_code"/>
         </xpath>
+
+        <!-- Bundles, as on the PDF -->
+        <xpath expr="//tr[@name='tr_section']" position="before">
+            <tr t-if="(is_section or is_subsection) and line.twp_is_bundle" name="twp_tr_bundle"
+                t-att-class="'fw-bolder o_line_section' if is_section else 'fw-bold o_line_subsection'">
+                <t t-set="twp_bundle_row" t-value="line._twp_bundle_row(price_field)"/>
+                <td t-if="twp_show_numbers" name="twp_td_line_number"/>
+                <td name="twp_td_bundle_name" t-att-class="padding_class">
+                    <span t-field="line.name"/>
+                </td>
+                <td t-if="twp_show_code" name="twp_td_code"/>
+                <td name="twp_td_bundle_quantity" class="text-end">
+                    <span class="text-nowrap twp_bundle_qty" t-out="twp_bundle_row['qty']" t-options="{'widget': 'float', 'decimal_precision': 'Product Unit'}"/>
+                </td>
+                <td name="twp_td_bundle_priceunit" t-attf-class="text-end text-nowrap {{ 'd-none d-sm-table-cell' if report_type == 'html' else '' }}">
+                    <span t-if="twp_bundle_row['show_prices'] and twp_bundle_row['package_price'] is not False" class="twp_package_price" t-out="twp_bundle_row['package_price']" t-options="{'widget': 'monetary', 'display_currency': sale_order.currency_id}"/>
+                </td>
+                <td t-if="display_discount" name="twp_td_bundle_discount" t-attf-class="{{ 'd-none d-sm-table-cell' if report_type == 'html' else '' }}"/>
+                <td t-if="display_taxes" name="twp_td_bundle_taxes" t-attf-class="text-end {{ 'd-none d-md-table-cell' if report_type == 'html' else '' }}">
+                    <span t-out="line._twp_section_tax_labels('name')"/>
+                </td>
+                <td name="twp_td_bundle_subtotal" class="text-end o_price_total">
+                    <span t-if="twp_bundle_row['show_prices']" class="text-nowrap twp_bundle_amount" t-out="twp_bundle_row['amount']" t-options="{'widget': 'monetary', 'display_currency': sale_order.currency_id}"/>
+                </td>
+            </tr>
+        </xpath>
+        <xpath expr="//tr[@name='tr_section']" position="attributes">
+            <attribute name="t-if"/>
+            <attribute name="t-elif">is_section or is_subsection</attribute>
+        </xpath>
+        <xpath expr="//td[@name='td_section_group_quantity']/span" position="attributes">
+            <attribute name="t-if">not line.twp_is_bundle</attribute>
+        </xpath>
+        <xpath expr="//td[@name='td_section_group_quantity']/span" position="before">
+            <span t-if="line.twp_is_bundle" class="twp_bundle_qty" t-out="line.twp_bundle_qty" t-options="{'widget': 'float', 'decimal_precision': 'Product Unit'}"/>
+        </xpath>
+        <xpath expr="//td[@name='td_section_group_priceunit']/span" position="attributes">
+            <attribute name="t-out">section_line['price_subtotal'] / line.twp_bundle_qty if line.twp_is_bundle and line.twp_bundle_qty else section_line['price_subtotal']</attribute>
+        </xpath>
+        <xpath expr="//tr[@name='tr_product']/td[@name='td_product_quantity']/*[1]" position="before">
+            <t t-set="twp_per_bundle" t-value="line._twp_print_per_bundle()"/>
+            <div t-if="twp_per_bundle" class="twp_member_qty">
+                <span t-field="line.twp_qty_per_bundle" class="twp_qty_per_bundle"/>
+                <span t-field="line.product_uom_id"/>
+                <span class="text-muted small text-nowrap">per package</span>
+            </div>
+        </xpath>
+        <xpath expr="//tr[@name='tr_product']/td[@name='td_product_quantity']/*[last()]" position="attributes">
+            <attribute name="t-if">not twp_per_bundle</attribute>
+        </xpath>
     </template>
 
 </odoo>

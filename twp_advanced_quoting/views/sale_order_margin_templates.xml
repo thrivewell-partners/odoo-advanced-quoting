@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- The order form's Margins tab: each section's amount, cost and margin. -->
+    <template id="section_margins">
+        <table class="table table-sm o_twp_section_margins">
+            <thead>
+                <tr>
+                    <th>Section</th>
+                    <th t-if="show_bundle_qty" class="text-end">Bundle Qty</th>
+                    <th class="text-end">Amount</th>
+                    <th class="text-end">Cost</th>
+                    <th class="text-end">Margin</th>
+                    <th class="text-end">Margin %</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr t-foreach="rows" t-as="row" t-att-class="'fw-bold' if not row['subsection'] else ''">
+                    <td t-att-class="'ps-4' if row['subsection'] else ''" t-out="row['name']"/>
+                    <td t-if="show_bundle_qty" class="text-end">
+                        <t t-if="row['bundle_qty'] is not False" t-out="row['bundle_qty']" t-options="{'widget': 'float', 'decimal_precision': 'Product Unit'}"/>
+                    </td>
+                    <td class="text-end" t-out="row['amount']" t-options="{'widget': 'monetary', 'display_currency': order.currency_id}"/>
+                    <td class="text-end" t-out="row['cost']" t-options="{'widget': 'monetary', 'display_currency': order.currency_id}"/>
+                    <td class="text-end" t-out="row['margin']" t-options="{'widget': 'monetary', 'display_currency': order.currency_id}"/>
+                    <td class="text-end">
+                        <t t-if="row['margin_percent'] is not False" t-out="'%.1f%%' % (row['margin_percent'] * 100)"/>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </template>
+
+</odoo>

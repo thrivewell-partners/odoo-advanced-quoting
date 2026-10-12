@@ -91,6 +91,20 @@
                             <field name="twp_introduction_default" placeholder="Here is the quote you requested."/>
                         </div>
                     </setting>
+                    <setting id="twp_bundles" company_dependent="1"
+                             string="Bundles"
+                             help="How a bundle's members print their quantities, and the product a bundle's Add Adjustment uses for markup or labor.">
+                        <div class="content-group mt16">
+                            <div class="row">
+                                <label for="twp_bundle_member_qty" string="Member quantities" class="col-lg-4 o_light_label"/>
+                                <field name="twp_bundle_member_qty"/>
+                            </div>
+                            <div class="row">
+                                <label for="twp_bundle_adjustment_product_id" string="Adjustment product" class="col-lg-4 o_light_label"/>
+                                <field name="twp_bundle_adjustment_product_id" options="{'no_create': True}"/>
+                            </div>
+                        </div>
+                    </setting>
                     <setting id="twp_document_styles" string="Document Styles"
                              help="How quotes are printed: title, totals, line numbers and the code column.">
                         <div class="content-group">

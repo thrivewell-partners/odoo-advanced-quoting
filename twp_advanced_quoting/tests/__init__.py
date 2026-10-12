@@ -4,3 +4,4 @@ from . import test_m0_invoice
 from . import test_m1_documents
 from . import test_m1_order_numbers
 from . import test_m1_quote_numbers
+from . import test_m2_bundles

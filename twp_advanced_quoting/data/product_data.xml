@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <!-- A bundle's markup or labor that is not a catalog item. Settings can point elsewhere. -->
+    <record id="product_bundle_adjustment" model="product.product">
+        <field name="name">Bundle Adjustment</field>
+        <field name="type">service</field>
+        <field name="sale_ok" eval="True"/>
+        <field name="purchase_ok" eval="False"/>
+        <field name="list_price">0.0</field>
+        <field name="standard_price">0.0</field>
+        <field name="invoice_policy">order</field>
+        <field name="description_sale">Bundle adjustment</field>
+    </record>
+
+</odoo>

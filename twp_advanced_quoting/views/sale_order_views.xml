@@ -21,16 +21,35 @@
                 <page string="Introduction" name="twp_introduction">
                     <field name="twp_introduction" nolabel="1" placeholder="Printed above the lines. The default is set in Sales Settings."/>
                 </page>
+                <page string="Margins" name="twp_section_margins" invisible="not twp_section_margins">
+                    <field name="twp_section_margins" nolabel="1"/>
+                </page>
             </xpath>
             <xpath expr="//field[@name='order_line']/list/field[@name='collapse_prices']" position="after">
                 <field name="twp_is_bundle" column_invisible="1"/>
-                <field name="twp_bundle_qty" column_invisible="1"/>
+                <field name="twp_in_bundle" column_invisible="1"/>
                 <field name="twp_option_mode" column_invisible="1"/>
                 <field name="twp_option_group" column_invisible="1"/>
                 <field name="twp_option_chosen" column_invisible="1"/>
             </xpath>
+            <!-- Inside a bundle only the quantity per bundle is typed (D15). -->
             <xpath expr="//field[@name='order_line']/list/field[@name='product_uom_qty']" position="before">
-                <field name="twp_qty_per_bundle" optional="show" invisible="display_type"/>
+                <field name="twp_qty_per_bundle" optional="show" invisible="display_type or not twp_in_bundle"/>
+            </xpath>
+            <xpath expr="//field[@name='order_line']/list/field[@name='product_uom_qty']" position="attributes">
+                <attribute name="readonly" add="twp_in_bundle" separator=" or "/>
+            </xpath>
+            <!-- Just left of the amount, so the bundle's row can keep it beside the section total. -->
+            <xpath expr="//field[@name='order_line']/list/field[@name='price_subtotal'][1]" position="before">
+                <field name="twp_bundle_qty" string="Bundle Qty" optional="show"
+                       invisible="not twp_is_bundle" readonly="not twp_is_bundle"/>
+            </xpath>
+            <xpath expr="//field[@name='order_line']/form//div[@name='ordered_qty']/field[@name='product_uom_qty']" position="attributes">
+                <attribute name="readonly">twp_in_bundle</attribute>
+            </xpath>
+            <xpath expr="//field[@name='order_line']/form//div[@name='ordered_qty']" position="after">
+                <field name="twp_in_bundle" invisible="1"/>
+                <field name="twp_qty_per_bundle" invisible="not twp_in_bundle"/>
             </xpath>
             <xpath expr="//field[@name='order_line']/list/field[@name='price_unit']" position="after">
                 <field name="twp_hide_price" optional="hide" invisible="display_type"/>
