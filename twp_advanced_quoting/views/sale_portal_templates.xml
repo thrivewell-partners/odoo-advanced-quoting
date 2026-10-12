@@ -5,6 +5,10 @@
          and the style's line numbers and code column. -->
     <template id="sale_order_portal_content" inherit_id="sale.sale_order_portal_content">
         <xpath expr="//tbody[@id='sale_info_table']" position="inside">
+            <tr t-if="sale_order.twp_quote_number and sale_order.twp_quote_number != sale_order.name" name="twp_quote_number">
+                <th class="ps-0 pb-0">Quote Number:</th>
+                <td class="w-100 pb-0 text-wrap"><span t-field="sale_order.twp_quote_number"/></td>
+            </tr>
             <tr t-foreach="sale_order._twp_header_fields()" t-as="twp_field" t-att-name="twp_field['name']">
                 <th class="ps-0 pb-0"><t t-out="twp_field['label']"/>:</th>
                 <td class="w-100 pb-0 text-wrap"><span t-out="twp_field['value']"/></td>

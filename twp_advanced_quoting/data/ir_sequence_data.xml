@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <!-- Numbers a quote again when it is confirmed, if the company turns that on in Settings. -->
+    <record id="seq_confirmed_order" model="ir.sequence">
+        <field name="name">Confirmed Sales Order</field>
+        <field name="code">twp.sale.order.confirmed</field>
+        <field name="prefix">SO</field>
+        <field name="padding">5</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
+</odoo>

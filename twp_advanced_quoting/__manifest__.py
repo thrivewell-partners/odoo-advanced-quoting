@@ -8,6 +8,7 @@
     "depends": ["sale_management", "sale_margin"],
     "data": [
         "security/ir.model.access.csv",
+        "data/ir_sequence_data.xml",
         "views/twp_document_style_views.xml",
         "views/res_config_settings_views.xml",
         "views/sale_order_views.xml",

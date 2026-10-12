@@ -4,6 +4,17 @@ from odoo import fields, models
 class ResCompany(models.Model):
     _inherit = "res.company"
 
+    twp_number_orders = fields.Boolean(
+        string="Number Confirmed Orders Separately",
+        help="A confirmed order takes a number from its own series, and keeps its quote number for reference.",
+    )
+    twp_invoice_prefix = fields.Char(
+        string="Invoice Number Prefix",
+        help="The first invoice in a sales journal is numbered with this prefix, such as REDI0001. "
+             "A journal that already has invoices carries on with its own pattern.",
+    )
+    twp_invoice_padding = fields.Integer(string="Invoice Number Digits", default=4)
+
     twp_job_name_enabled = fields.Boolean(string="Job Name", default=True)
     twp_job_name_label = fields.Char(string="Job Name Label", default="Job Name")
     twp_ship_via_enabled = fields.Boolean(string="Ship Via", default=True)

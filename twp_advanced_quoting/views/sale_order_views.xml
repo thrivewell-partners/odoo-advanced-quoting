@@ -10,6 +10,7 @@
                 <field name="twp_job_name"/>
             </xpath>
             <xpath expr="//group[@name='order_details']/field[@name='payment_term_id']" position="after">
+                <field name="twp_quote_number" invisible="not twp_quote_number or twp_quote_number == name"/>
                 <field name="twp_document_style_id" options="{'no_create': True}"/>
                 <field name="twp_ship_via"/>
                 <field name="twp_fob"/>
@@ -56,6 +57,7 @@
         <field name="arch" type="xml">
             <field name="partner_id" position="after">
                 <field name="twp_job_name"/>
+                <field name="twp_quote_number"/>
             </field>
         </field>
     </record>

@@ -9,6 +9,12 @@
         </xpath>
 
         <!-- Header fields, then the introduction, above the lines -->
+        <xpath expr="//div[@id='informations']" position="inside">
+            <div t-if="doc.twp_quote_number and doc.twp_quote_number != doc.name" class="col" name="twp_quote_number">
+                <strong>Quote Number</strong>
+                <div t-field="doc.twp_quote_number">REDQ0001</div>
+            </div>
+        </xpath>
         <xpath expr="//div[@id='informations']" position="after">
             <t t-set="twp_header_fields" t-value="doc._twp_header_fields()"/>
             <div t-if="twp_header_fields" class="row mb-4" id="twp_informations">

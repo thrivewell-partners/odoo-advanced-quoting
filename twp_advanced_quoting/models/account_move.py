@@ -22,6 +22,21 @@ class AccountMove(models.Model):
             arch = apply_header_field_settings(arch, self.env.company, INVOICE_HEADER_FIELDS)
         return arch, view
 
+    def _get_starting_sequence(self):
+        """The first number of a sales journal: the company's invoice prefix, when it has one.
+
+        Odoo numbers each invoice from the last one in its journal, so this decides the pattern
+        only for a journal's first. Credit notes with their own sequence keep Odoo's R in front.
+        """
+        self.ensure_one()
+        prefix = self.company_id.twp_invoice_prefix
+        if not (prefix and self.journal_id.type == "sale" and self.move_type in ("out_invoice", "out_refund")):
+            return super()._get_starting_sequence()
+        starting_sequence = prefix + "0" * max(self.company_id.twp_invoice_padding, 1)
+        if self.journal_id.refund_sequence and self.move_type == "out_refund":
+            starting_sequence = "R" + starting_sequence
+        return starting_sequence
+
     def _twp_header_fields(self):
         self.ensure_one()
         return [

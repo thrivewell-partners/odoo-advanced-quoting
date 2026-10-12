@@ -1,4 +1,5 @@
-from odoo import api, fields, models
+from odoo import _, api, fields, models
+from odoo.exceptions import UserError
 from odoo.tools import is_html_empty
 
 from .header_fields import apply_header_field_settings, header_field_cache_key, header_field_settings
@@ -20,6 +21,11 @@ class SaleOrder(models.Model):
         string="Document Style",
         help="How the quote is built and printed.",
     )
+
+    # Numbers. With separate order numbers on, `name` is the quote number until the order is
+    # confirmed, then the order number; both are kept.
+    twp_quote_number = fields.Char(string="Quote Number", copy=False, readonly=True, index="btree_not_null")
+    twp_order_number = fields.Char(string="Order Number", copy=False, readonly=True, index="btree_not_null")
 
     # Header fields. Each company turns them on or off and renames them in Settings.
     twp_job_name = fields.Char(string="Job Name", help="Copied when the quote is duplicated, and carried to the invoice.")
@@ -48,6 +54,47 @@ class SaleOrder(models.Model):
             elif is_html_empty(order.twp_introduction):
                 company = order.company_id.with_context(lang=order.partner_id.lang)
                 order.twp_introduction = company.twp_introduction_default
+
+    @property
+    def _rec_names_search(self):
+        return [*super()._rec_names_search, "twp_quote_number", "twp_order_number"]
+
+    # ------------------------------------------------------------
+    # Order numbers
+    # ------------------------------------------------------------
+
+    def action_confirm(self):
+        # Checked here as well as in super, so a refused confirmation spends no order number.
+        for order in self:
+            error_msg = order._confirmation_error_message()
+            if error_msg:
+                raise UserError(error_msg)
+        # Numbered before super, so deliveries, purchases and the confirmation email carry it.
+        self.filtered(lambda order: order.company_id.twp_number_orders)._twp_take_order_number()
+        return super().action_confirm()
+
+    def _twp_take_order_number(self):
+        for order in self:
+            quote_number = order.twp_quote_number or order.name
+            order_number = order.twp_order_number or self.env["ir.sequence"].with_company(
+                order.company_id
+            ).next_by_code("twp.sale.order.confirmed", sequence_date=fields.Date.context_today(order))
+            if not order_number:
+                continue
+            order.write({
+                "twp_quote_number": quote_number,
+                "twp_order_number": order_number,
+                "name": order_number,
+            })
+            order.message_post(body=_("Quote %(quote)s confirmed as order %(order)s.", quote=quote_number, order=order_number))
+
+    def action_draft(self):
+        # Back to a quote: it reads as the quote it was. Confirming again reuses its order number.
+        orders = self.filtered(lambda order: order.state in ("cancel", "sent"))
+        result = super().action_draft()
+        for order in orders.filtered(lambda o: o.twp_quote_number and o.name == o.twp_order_number):
+            order.name = order.twp_quote_number
+        return result
 
     # ------------------------------------------------------------
     # Header fields on the form and the documents
