@@ -178,7 +178,7 @@ class SaleOrderLine(models.Model):
             elif line.twp_not_chosen:
                 line.twp_option_label = _("Not chosen")
             elif line.twp_option_chosen:
-                line.twp_option_label = _("%s, chosen", labels[line.twp_option_mode])
+                line.twp_option_label = _("Chosen")
             else:
                 line.twp_option_label = labels[line.twp_option_mode]
 

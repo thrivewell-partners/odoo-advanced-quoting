@@ -73,7 +73,7 @@ class TestChoosing(OptionCase, TransactionCase):
         self.assertEqual(self.section(order, "Option 1").twp_option_label, "Alternative")
         self.assertEqual(self.section(order, "HVLS fan").twp_option_label, "Add-on")
         self.section(order, "HVLS fan").twp_option_chosen = True
-        self.assertEqual(self.section(order, "HVLS fan").twp_option_label, "Add-on, chosen")
+        self.assertEqual(self.section(order, "HVLS fan").twp_option_label, "Chosen")
         self.assertFalse(self.section(order, "Heater package").twp_option_label)
         self.assertFalse(self.line(order, self.fan).twp_option_label)
 
