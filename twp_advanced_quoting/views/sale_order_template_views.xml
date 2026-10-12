@@ -9,9 +9,12 @@
             <xpath expr="//field[@name='sale_order_template_line_ids']/list/field[@name='is_optional']" position="after">
                 <field name="twp_is_bundle" column_invisible="1"/>
             </xpath>
+            <xpath expr="//field[@name='sale_order_template_line_ids']/list/field[@name='sequence']" position="after">
+                <field name="twp_hide_on_documents" string="Print" widget="twp_print_toggle" optional="show"
+                       invisible="display_type" width="40px"/>
+            </xpath>
             <xpath expr="//field[@name='sale_order_template_line_ids']/list" position="inside">
                 <field name="twp_hide_price" optional="hide" invisible="display_type"/>
-                <field name="twp_hide_on_documents" optional="hide" invisible="display_type"/>
                 <!-- Last, so the bundle's row can keep it. Quantities inside a bundle are per bundle. -->
                 <field name="twp_bundle_qty" optional="show" invisible="not twp_is_bundle" readonly="not twp_is_bundle"/>
             </xpath>

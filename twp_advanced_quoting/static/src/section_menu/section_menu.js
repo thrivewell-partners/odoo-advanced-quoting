@@ -6,7 +6,55 @@ import { patch } from "@web/core/utils/patch";
 // Cells a bundle's or an option's row keeps beside its section total.
 const TWP_SECTION_COLUMNS = ["twp_option_group", "twp_option_label", "twp_bundle_qty"];
 
+/**
+ * Whether a section prints its lines as one: a bundle, or Odoo's Hide Prices or Hide Composition.
+ */
+function twpGroups(record) {
+    const data = record.data;
+    return Boolean(data.twp_is_bundle || data.collapse_prices || data.collapse_composition);
+}
+
 patch(SectionAndNoteListRenderer.prototype, {
+    /**
+     * The bundle or section, around this line, that prints it as part of one row.
+     */
+    twpGroupOf(record) {
+        let parent = this.parentSectionMap.get(record);
+        while (parent) {
+            if (twpGroups(parent)) {
+                return parent;
+            }
+            parent = this.parentSectionMap.get(parent);
+        }
+        return null;
+    },
+
+    /**
+     * A grouped section and its lines are marked, so what prints as one row reads as one block;
+     * a line hidden on documents, or whose price is, is greyed.
+     */
+    getRowClass(record) {
+        const classNames = [super.getRowClass(record)];
+        if (this.isSection(record) && twpGroups(record)) {
+            const data = record.data;
+            const kind = data.twp_is_bundle
+                ? "o_twp_bundle"
+                : data.collapse_composition
+                  ? "o_twp_one_line"
+                  : "o_twp_one_price";
+            classNames.push("o_twp_group", "o_twp_group_head", kind);
+        } else if (this.twpGroupOf(record)) {
+            classNames.push("o_twp_group", "o_twp_group_member");
+        }
+        if (!record.data.display_type && record.data.twp_hide_on_documents) {
+            classNames.push("o_twp_hidden_line");
+        }
+        if (!record.data.display_type && record.data.twp_hide_price) {
+            classNames.push("o_twp_hidden_price");
+        }
+        return classNames.join(" ");
+    },
+
     /**
      * A bundle's row keeps its Bundle Qty cell, and an alternative's or add-on's its Option
      * cells. The columns sit just left of the section total on quotes, and last on templates,

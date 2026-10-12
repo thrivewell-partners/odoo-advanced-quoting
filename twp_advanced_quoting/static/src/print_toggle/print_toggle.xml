@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<templates>
+
+    <t t-name="twp_advanced_quoting.PrintToggle">
+        <button
+            type="button"
+            class="btn btn-link p-0 border-0 fa fa-fw o_twp_print_toggle"
+            t-att-class="hidden ? 'fa-eye-slash text-danger' : 'fa-eye text-muted'"
+            t-att-data-tooltip="tooltip"
+            t-att-aria-label="tooltip"
+            t-att-aria-pressed="hidden ? 'true' : 'false'"
+            t-att-disabled="props.readonly"
+            t-on-click.prevent.stop="toggle"
+        />
+    </t>
+
+</templates>

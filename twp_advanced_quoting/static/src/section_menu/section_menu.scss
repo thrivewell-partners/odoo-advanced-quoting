@@ -1,0 +1,72 @@
+// A bundle, or a section that prints its lines as one price, and every line in it carry a bar
+// down the left edge, so what prints as one row reads as one block in the editor.
+$o-twp-group-color: var(--bs-info);
+
+table.o_section_and_note_list_view {
+    tr.o_twp_group > td:first-child {
+        position: relative;
+
+        &::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            width: 4px;
+            background-color: $o-twp-group-color;
+        }
+    }
+
+    tr.o_twp_group_member {
+        --table-bg-type: rgba(var(--bs-info-rgb), .06);
+        --table-striped-bg: var(--table-bg-type);
+
+        > td:is([name="product_template_id"], [name="product_id"]) {
+            padding-left: 1.25rem;
+        }
+    }
+
+    // The group's own row: an icon before its title saying how it prints.
+    tr.o_twp_group_head > td:nth-child(2) > .o_field_widget {
+        display: flex !important;
+        align-items: center;
+        gap: .4rem;
+
+        > * {
+            flex: 1 1 auto;
+            min-width: 0;
+        }
+
+        &::before {
+            flex: 0 0 auto;
+            font-family: FontAwesome;
+            font-weight: normal;
+            color: $o-twp-group-color;
+        }
+    }
+
+    tr.o_twp_bundle > td:nth-child(2) > .o_field_widget::before {
+        content: "\f1b2";  // fa-cube
+    }
+
+    tr.o_twp_one_price > td:nth-child(2) > .o_field_widget::before {
+        content: "\f247";  // fa-object-group
+    }
+
+    tr.o_twp_one_line > td:nth-child(2) > .o_field_widget::before {
+        content: "\f066";  // fa-compress
+    }
+
+    // A line hidden on documents is greyed, its eye crossed out; it still counts in the total.
+    tr.o_twp_hidden_line > td.o_data_cell:not(.o_handle_cell, [name="twp_hide_on_documents"]) {
+        opacity: .5;
+    }
+
+    tr.o_twp_hidden_price > td[name="price_unit"] {
+        opacity: .5;
+    }
+
+    td[name="twp_hide_on_documents"] {
+        text-align: center;
+    }
+}
