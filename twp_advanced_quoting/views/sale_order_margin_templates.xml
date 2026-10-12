@@ -24,7 +24,7 @@
                     <td class="text-end" t-out="row['cost']" t-options="{'widget': 'monetary', 'display_currency': order.currency_id}"/>
                     <td class="text-end" t-out="row['margin']" t-options="{'widget': 'monetary', 'display_currency': order.currency_id}"/>
                     <td class="text-end">
-                        <t t-if="row['margin_percent'] is not False" t-out="'%.1f%%' % (row['margin_percent'] * 100)"/>
+                        <t t-if="row['margin_percent'] is not False"><t t-out="round(row['margin_percent'] * 100, 1)"/>%</t>
                     </td>
                 </tr>
             </tbody>
