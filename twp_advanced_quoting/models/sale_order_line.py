@@ -178,7 +178,11 @@ class SaleOrderLine(models.Model):
         vals_list = [self._twp_bundle_vals(vals) for vals in vals_list]
         lines = super().create(vals_list)
         if not self.env.context.get("twp_bundle_sync"):
-            lines.order_id.order_line._twp_sync_bundles()
+            # A price given with the line survives its first bundle quantity. Odoo counts it as
+            # not typed by hand, so the quantity change would otherwise reprice it from the product.
+            priced = self.browse([line.id for line, vals in zip(lines, vals_list) if "price_unit" in vals])
+            with self.env.protecting([self._fields["price_unit"], self._fields["technical_price_unit"]], priced):
+                lines.order_id.order_line._twp_sync_bundles()
         return lines
 
     def write(self, vals):

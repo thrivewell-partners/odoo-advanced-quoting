@@ -49,6 +49,16 @@ class TestBundleQuantitiesM2(BundleCase, TransactionCase):
         self.assertEqual(fan.twp_qty_per_bundle, 2.0)
         self.assertEqual(fan.product_uom_qty, 10.0)
 
+    def test_price_given_with_a_new_member(self):
+        order = self.make_order(bundle_only=True)
+        order.write({"order_line": [Command.create({
+            "product_id": self.fan.id, "price_unit": 200, "sequence": 14,
+        })]})
+        fan = self.line(order, self.fan)
+        self.assertEqual(fan.product_uom_qty, 5.0)
+        self.assertEqual(fan.price_unit, 200.0)
+        self.assertEqual(order.amount_untaxed, 6300.0 + 1000.0)
+
     def test_line_moved_into_the_bundle(self):
         order = self.make_order(bundle_only=True)
         order.write({"order_line": [
