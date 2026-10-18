@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="res_config_settings_view_form" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.twp_bids</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="twp_advanced_quoting.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//setting[@id='twp_quote_numbers']" position="after">
+                <setting id="twp_bid_numbers" company_dependent="1"
+                         string="Bid Numbers"
+                         help="Bids are numbered apart from quotes. A won bid takes the next quote number and keeps its bid number for reference.">
+                    <div class="content-group mt16">
+                        <div class="row">
+                            <label for="twp_bid_prefix" string="Prefix" class="col-lg-4 o_light_label"/>
+                            <field name="twp_bid_prefix" placeholder="REDB"/>
+                        </div>
+                        <div class="row">
+                            <label for="twp_bid_padding" string="Digits" class="col-lg-4 o_light_label"/>
+                            <field name="twp_bid_padding"/>
+                        </div>
+                        <div class="row">
+                            <label for="twp_bid_next_number" string="Next number" class="col-lg-4 o_light_label"/>
+                            <field name="twp_bid_next_number"/>
+                        </div>
+                        <div class="row">
+                            <label for="twp_bid_title" string="Title" class="col-lg-4 o_light_label"/>
+                            <field name="twp_bid_title" placeholder="Bid"/>
+                        </div>
+                    </div>
+                </setting>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

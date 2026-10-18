@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- A won bid's quotation carries its bid number, as a confirmed order carries its quote number. -->
+    <template id="report_saleorder_document" inherit_id="twp_advanced_quoting.report_saleorder_document">
+        <xpath expr="//div[@name='twp_quote_number']" position="after">
+            <div t-if="doc.twp_bid_number and doc.twp_bid_number != doc.name" class="col" name="twp_bid_number">
+                <strong>Bid Number</strong>
+                <div t-field="doc.twp_bid_number">BID0001</div>
+            </div>
+        </xpath>
+    </template>
+
+</odoo>

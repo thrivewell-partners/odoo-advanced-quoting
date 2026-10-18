@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="twp_bid_copy_view_form" model="ir.ui.view">
+        <field name="name">twp.bid.copy.form</field>
+        <field name="model">twp.bid.copy</field>
+        <field name="arch" type="xml">
+            <form string="Copy to Customers">
+                <p class="text-muted">
+                    Each customer gets a copy of this bid with its own bid number, the same lines and prices,
+                    and their own addresses and payment terms.
+                </p>
+                <group>
+                    <field name="bid_id"/>
+                    <field name="partner_ids" widget="many2many_tags"
+                           options="{'no_create_edit': True}" context="{'res_partner_search_mode': 'customer'}"/>
+                    <field name="already_bid_ids" widget="many2many_tags" invisible="not already_bid_ids"/>
+                </group>
+                <footer>
+                    <button name="action_apply" string="Copy" type="object" class="btn-primary" data-hotkey="q"/>
+                    <button string="Discard" class="btn-secondary" special="cancel" data-hotkey="x"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+</odoo>

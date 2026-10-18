@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_order_form" model="ir.ui.view">
+        <field name="name">sale.order.form.twp_bids</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_order_form"/>
+        <field name="arch" type="xml">
+            <!-- A bid is won or lost, never confirmed as it is. -->
+            <xpath expr="//header/button[@name='action_confirm'][1]" position="attributes">
+                <attribute name="invisible" add="twp_is_bid" separator=" or "/>
+            </xpath>
+            <xpath expr="//header/button[@name='action_confirm'][2]" position="attributes">
+                <attribute name="invisible" add="twp_is_bid" separator=" or "/>
+            </xpath>
+            <xpath expr="//header/button[@name='action_cancel']" position="attributes">
+                <attribute name="invisible" add="twp_is_bid" separator=" or "/>
+            </xpath>
+            <xpath expr="//header/button[@name='action_preview_sale_order']" position="before">
+                <button string="Won" name="action_twp_bid_won" type="object" class="btn-primary"
+                        invisible="not twp_is_bid or twp_bid_status != 'open' or not id"
+                        confirm="Make this bid a quotation? Any other open bids on the same opportunity are marked lost."/>
+                <button string="Copy to Customers" name="action_twp_copy_to_customers" type="object"
+                        invisible="not twp_is_bid or state == 'cancel' or not id"/>
+                <button string="Lost" name="action_twp_bid_lost" type="object"
+                        invisible="not twp_is_bid or twp_bid_status != 'open' or not id"/>
+            </xpath>
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_twp_view_copies" type="object" class="oe_stat_button" icon="fa-files-o"
+                        invisible="not twp_bid_copy_count">
+                    <field name="twp_bid_copy_count" widget="statinfo" string="Copies"/>
+                </button>
+            </xpath>
+            <xpath expr="//div[@name='button_box']" position="after">
+                <widget name="web_ribbon" title="Bid" bg_color="text-bg-info" invisible="not twp_is_bid or twp_bid_status != 'open'"/>
+                <widget name="web_ribbon" title="Lost" bg_color="text-bg-danger" invisible="twp_bid_status != 'lost'"/>
+            </xpath>
+            <xpath expr="//group[@name='order_details']/field[@name='payment_term_id']" position="after">
+                <field name="twp_is_bid" invisible="1"/>
+                <field name="twp_bid_status" invisible="not twp_bid_status"/>
+                <field name="twp_bid_number" invisible="not twp_bid_number or twp_bid_number == name"/>
+                <field name="twp_bid_sent_date" invisible="not twp_bid_sent_date"/>
+                <field name="twp_bid_source_id" invisible="not twp_bid_source_id"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_bid_list" model="ir.ui.view">
+        <field name="name">sale.order.list.twp_bids</field>
+        <field name="model">sale.order</field>
+        <field name="priority">40</field>
+        <field name="arch" type="xml">
+            <list string="Bids" sample="1" decoration-muted="twp_bid_status == 'lost'" decoration-success="twp_bid_status == 'won'">
+                <field name="name" string="Number" readonly="1" decoration-bf="1"/>
+                <field name="twp_bid_number" optional="hide"/>
+                <field name="date_order" string="Date" widget="date" optional="show"/>
+                <field name="twp_bid_sent_date" optional="show"/>
+                <field name="partner_id" readonly="1"/>
+                <field name="twp_job_name" optional="show"/>
+                <field name="opportunity_id" optional="show"/>
+                <field name="user_id" widget="many2one_avatar_user" optional="show"/>
+                <field name="team_id" optional="hide"/>
+                <field name="company_id" groups="base.group_multi_company" optional="show" readonly="1"/>
+                <field name="amount_untaxed" sum="Total Tax Excluded" widget="monetary" optional="hide"/>
+                <field name="amount_total" sum="Total Tax Included" widget="monetary" decoration-bf="1" optional="show"/>
+                <field name="currency_id" column_invisible="True"/>
+                <field name="twp_bid_status" widget="badge"
+                       decoration-info="twp_bid_status == 'open'" decoration-success="twp_bid_status == 'won'"
+                       decoration-danger="twp_bid_status == 'lost'"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_bid_search" model="ir.ui.view">
+        <field name="name">sale.order.search.twp_bids</field>
+        <field name="model">sale.order</field>
+        <field name="inherit_id" ref="sale.view_sales_order_filter"/>
+        <field name="arch" type="xml">
+            <field name="partner_id" position="after">
+                <field name="twp_bid_number"/>
+            </field>
+            <xpath expr="//search/group" position="before">
+                <separator/>
+                <filter string="Open Bids" name="twp_open_bids" domain="[('twp_bid_status', '=', 'open')]"/>
+                <filter string="Won Bids" name="twp_won_bids" domain="[('twp_bid_status', '=', 'won')]"/>
+                <filter string="Lost Bids" name="twp_lost_bids" domain="[('twp_bid_status', '=', 'lost')]"/>
+            </xpath>
+            <xpath expr="//search/group" position="inside">
+                <filter string="Bid Status" name="twp_group_bid_status" context="{'group_by': 'twp_bid_status'}"/>
+                <filter string="Opportunity" name="twp_group_opportunity" context="{'group_by': 'opportunity_id'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Every order that started as a bid, open ones first in view. -->
+    <record id="action_bids" model="ir.actions.act_window">
+        <field name="name">Bids</field>
+        <field name="res_model">sale.order</field>
+        <field name="view_mode">list,form,kanban,pivot,graph,activity</field>
+        <field name="domain">[('twp_bid_number', '!=', False)]</field>
+        <field name="context">{'default_twp_is_bid': True, 'search_default_twp_open_bids': 1}</field>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'list', 'view_id': ref('view_bid_list')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('sale.view_order_form')})]"/>
+        <field name="search_view_id" ref="sale.view_sales_order_filter"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create a bid
+            </p>
+            <p>
+                A bid is built like a quote and sent to one of several bidders on the same job.
+                It stays here, out of Quotations, until it is won.
+            </p>
+        </field>
+    </record>
+
+    <menuitem id="menu_bids" name="Bids" parent="sale.sale_order_menu" action="action_bids" sequence="5"/>
+
+    <!-- Quotations never list a bid. Put back on uninstall. -->
+    <record id="sale.action_quotations_with_onboarding" model="ir.actions.act_window">
+        <field name="domain">[('twp_is_bid', '=', False)]</field>
+    </record>
+    <record id="sale.action_quotations" model="ir.actions.act_window">
+        <field name="domain">[('twp_is_bid', '=', False)]</field>
+    </record>
+    <record id="sale.action_quotations_salesteams" model="ir.actions.act_window">
+        <field name="domain">[('twp_is_bid', '=', False)]</field>
+    </record>
+
+</odoo>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <!-- Numbers bids apart from quotes, so a lost bid spends no quote number. -->
+    <record id="seq_bid" model="ir.sequence">
+        <field name="name">Bid</field>
+        <field name="code">twp.sale.order.bid</field>
+        <field name="prefix">BID</field>
+        <field name="padding">4</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
+</odoo>
