@@ -13,10 +13,6 @@ class TestBids(TransactionCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.env.company.twp_number_orders = False
-        cls.env["res.config.settings"].create({
-            "twp_quote_prefix": "TQ", "twp_quote_padding": 4, "twp_quote_next_number": 1,
-            "twp_bid_prefix": "TB", "twp_bid_padding": 4, "twp_bid_next_number": 1,
-        }).execute()
         cls.heater = cls.env["product.product"].create({"name": "TWP Bid Heater", "type": "consu", "list_price": 1000})
         Partner = cls.env["res.partner"]
         cls.bidder_a = Partner.create({"name": "TWP Bidder A"})
@@ -27,6 +23,14 @@ class TestBids(TransactionCase):
         cls.opportunity = cls.env["crm.lead"].create({
             "name": "TWP Main Street School", "type": "opportunity", "team_id": team.id,
         })
+
+    def setUp(self):
+        super().setUp()
+        # Numbers come from database sequences, which a test's rollback does not wind back.
+        self.env["res.config.settings"].create({
+            "twp_quote_prefix": "TQ", "twp_quote_padding": 4, "twp_quote_next_number": 1,
+            "twp_bid_prefix": "TB", "twp_bid_padding": 4, "twp_bid_next_number": 1,
+        }).execute()
 
     def _bid(self, partner=None, price=950.0):
         return self.env["sale.order"].with_context(default_twp_is_bid=True).create({
