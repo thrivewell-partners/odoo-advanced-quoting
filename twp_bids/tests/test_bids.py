@@ -22,7 +22,11 @@ class TestBids(TransactionCase):
         cls.bidder_a = Partner.create({"name": "TWP Bidder A"})
         cls.bidder_b = Partner.create({"name": "TWP Bidder B"})
         cls.bidder_c = Partner.create({"name": "TWP Bidder C"})
-        cls.opportunity = cls.env["crm.lead"].create({"name": "TWP Main Street School", "type": "opportunity"})
+        # A team of its own, so a database's rules for its default team don't apply.
+        team = cls.env["crm.team"].create({"name": "TWP Bid Team"})
+        cls.opportunity = cls.env["crm.lead"].create({
+            "name": "TWP Main Street School", "type": "opportunity", "team_id": team.id,
+        })
 
     def _bid(self, partner=None, price=950.0):
         return self.env["sale.order"].with_context(default_twp_is_bid=True).create({
