@@ -113,16 +113,19 @@ class SaleOrderLine(models.Model):
         compute, and which stays cached through a resequence.
         """
         self.ensure_one()
-        return self.browse(self._twp_sections_by_line().get(self.id, ()))
-
-    def _twp_sections_by_line(self):
-        """{line id: (subsection id, section id)} for every line on the order, from one pass.
-
-        Every line asks this, the totals once per line, so a large quote would read its lines
-        once per line. The pass is kept for the transaction against the order's lines, their
-        sequence and their kinds, so any change to those reads them again.
-        """
         lines = self.order_id.order_line
+        positions = self._twp_sections_by_line(lines).get(self.id, ())
+        return self.browse([lines._ids[position] for position in positions])
+
+    @api.model
+    def _twp_sections_by_line(self, lines):
+        """{line id: positions in `lines` of its subsection and section}, from one pass.
+
+        Every line asks this, the totals once per line, so a large quote would otherwise read
+        its lines once per line. The pass is kept for the transaction against the lines, their
+        sequence and their kinds, so any change to those reads them again. It holds positions,
+        not records: the editor's unsaved lines are new records each time, equal by id.
+        """
         key = (
             tuple(lines._ids),
             tuple(lines.mapped("sequence")),
@@ -132,17 +135,19 @@ class SaleOrderLine(models.Model):
         if key not in memo:
             if len(memo) > 1000:
                 memo.clear()
+            position_of = {line_id: position for position, line_id in enumerate(lines._ids)}
             by_line = {}
             section = subsection = None
             for line in lines.sorted("sequence"):
+                position = position_of[line.id]
                 if line.display_type == "line_section":
-                    section, subsection = line.id, None
+                    section, subsection = position, None
                     by_line[line.id] = ()
                 elif line.display_type == "line_subsection":
-                    subsection = line.id
-                    by_line[line.id] = (section,) if section else ()
+                    subsection = position
+                    by_line[line.id] = (section,) if section is not None else ()
                 else:
-                    by_line[line.id] = tuple(id_ for id_ in (subsection, section) if id_)
+                    by_line[line.id] = tuple(p for p in (subsection, section) if p is not None)
             memo[key] = by_line
         return memo[key]
 
