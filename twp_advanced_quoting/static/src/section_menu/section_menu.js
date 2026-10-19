@@ -134,12 +134,23 @@ patch(SaleOrderLineListRenderer.prototype, {
         return record.model.root?.data?.twp_structure === "itemized";
     },
 
+    /**
+     * Odoo's optional section, or one inside it, is offered to the customer online at quantity
+     * 0, so it can be neither a bundle nor an option until it is unset. The server refuses both.
+     */
+    twpInOptional(record) {
+        return this.shouldCollapse(record, "is_optional", true);
+    },
+
     twpCanSetBundle(record) {
-        return record.data.twp_is_bundle || !this.twpItemized(record);
+        return record.data.twp_is_bundle || (!this.twpItemized(record) && !this.twpInOptional(record));
     },
 
     twpCanSetOption(record) {
-        return !this.twpItemized(record) || Boolean(record.model.root?.data?.twp_allow_options);
+        return (
+            !this.twpInOptional(record) &&
+            (!this.twpItemized(record) || Boolean(record.model.root?.data?.twp_allow_options))
+        );
     },
 
     /**

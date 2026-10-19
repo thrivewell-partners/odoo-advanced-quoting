@@ -1,5 +1,5 @@
 from odoo import _, api, fields, models
-from odoo.exceptions import UserError
+from odoo.exceptions import UserError, ValidationError
 from odoo.tools import float_compare, float_repr, float_round
 from odoo.tools.misc import unique
 
@@ -113,19 +113,38 @@ class SaleOrderLine(models.Model):
         compute, and which stays cached through a resequence.
         """
         self.ensure_one()
-        section = subsection = self.browse()
-        for line in self.order_id.order_line.sorted("sequence"):
-            if line == self:
-                if self.display_type == "line_section":
-                    return self.browse()
-                if self.display_type == "line_subsection":
-                    return section
-                return subsection | section
-            if line.display_type == "line_section":
-                section, subsection = line, self.browse()
-            elif line.display_type == "line_subsection":
-                subsection = line
-        return self.browse()
+        return self.browse(self._twp_sections_by_line().get(self.id, ()))
+
+    def _twp_sections_by_line(self):
+        """{line id: (subsection id, section id)} for every line on the order, from one pass.
+
+        Every line asks this, the totals once per line, so a large quote would read its lines
+        once per line. The pass is kept for the transaction against the order's lines, their
+        sequence and their kinds, so any change to those reads them again.
+        """
+        lines = self.order_id.order_line
+        key = (
+            tuple(lines._ids),
+            tuple(lines.mapped("sequence")),
+            tuple(lines.mapped("display_type")),
+        )
+        memo = self.env.cr.cache.setdefault("twp_sections_by_line", {})
+        if key not in memo:
+            if len(memo) > 1000:
+                memo.clear()
+            by_line = {}
+            section = subsection = None
+            for line in lines.sorted("sequence"):
+                if line.display_type == "line_section":
+                    section, subsection = line.id, None
+                    by_line[line.id] = ()
+                elif line.display_type == "line_subsection":
+                    subsection = line.id
+                    by_line[line.id] = (section,) if section else ()
+                else:
+                    by_line[line.id] = tuple(id_ for id_ in (subsection, section) if id_)
+            memo[key] = by_line
+        return memo[key]
 
     def _twp_is_special(self):
         # A global discount or down payment is appended under whatever section is last.
@@ -230,6 +249,21 @@ class SaleOrderLine(models.Model):
             others = line._twp_alternatives().filtered(lambda other: other != line and other.twp_option_chosen)
             if others:
                 others.with_context(twp_option_sync=True).twp_option_chosen = False
+
+    @api.constrains("is_optional", "twp_is_bundle", "twp_option_mode")
+    def _twp_check_not_optional(self):
+        """Odoo's optional section is offered online at quantity 0, which neither a bundle nor an
+        option can carry: a bundle sets its members' quantities, and an option prints its price.
+        """
+        for line in self.filtered(lambda l: l.display_type in ("line_section", "line_subsection")):
+            sections = line | line._twp_section_members().filtered("display_type")
+            optional = any((line | line._twp_enclosing_sections()).mapped("is_optional"))
+            if optional and any(section.twp_is_bundle or section._twp_is_option() for section in sections):
+                raise ValidationError(_(
+                    "%(section)s is an optional section, so it can't be a bundle, an alternative or "
+                    "an add-on. Unset Optional first.",
+                    section=line.name,
+                ))
 
     def _twp_check_options_editable(self, vals):
         if OPTION_FIELDS & set(vals) and any(

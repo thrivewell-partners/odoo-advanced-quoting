@@ -2,6 +2,15 @@
 <templates>
 
     <t t-inherit="sale.ListRenderer.RecordRow" t-inherit-mode="extension">
+        <!-- A bundle always hides its members' prices; Unset Bundle shows them again. -->
+        <xpath expr="//DropdownItem[contains(@onSelected, 'collapse_prices')]" position="attributes">
+            <attribute name="t-if">props.hidePrices and !record.data.twp_is_bundle</attribute>
+        </xpath>
+        <!-- Odoo's optional section prints 0.00 and reads like Set Add-on beside it, so it is
+             offered only to undo it. -->
+        <xpath expr="//DropdownItem[contains(@onSelected, 'toggleIsOptional')]" position="attributes">
+            <attribute name="t-if">record.data.is_optional</attribute>
+        </xpath>
         <t t-name="composition_button" position="after">
             <DropdownItem t-if="this.twpCanSetBundle(record)" onSelected="() => this.twpToggleBundle(record)">
                 <i class="me-1 fa fa-fw fa-cube"/>
@@ -43,6 +52,9 @@
     </t>
 
     <t t-inherit="sale_management.ListRenderer.RecordRow" t-inherit-mode="extension">
+        <xpath expr="//DropdownItem[contains(@onSelected, 'toggleIsOptional')]" position="attributes">
+            <attribute name="t-if">record.data.is_optional</attribute>
+        </xpath>
         <t t-name="composition_button" position="after">
             <DropdownItem onSelected="() => this.twpToggleBundle(record)">
                 <i class="me-1 fa fa-fw fa-cube"/>

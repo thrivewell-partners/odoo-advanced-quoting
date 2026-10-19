@@ -1,4 +1,5 @@
-from odoo import fields, models
+from odoo import _, api, fields, models
+from odoo.exceptions import ValidationError
 
 
 class SaleOrderTemplateLine(models.Model):
@@ -26,6 +27,20 @@ class SaleOrderTemplateLine(models.Model):
         string="Hide Price",
         help="Printed with its quantity and no price. Its price still counts in the section and the total.",
     )
+
+    @api.constrains("is_optional", "twp_is_bundle")
+    def _twp_check_not_optional(self):
+        """An optional section's lines start at quantity 0, which a bundle's members can't."""
+        for line in self.filtered("display_type"):
+            bundles = (line | line.sale_order_template_id.sale_order_template_line_ids.filtered(
+                lambda other: other.parent_id == line
+            )).filtered("twp_is_bundle")
+            optional = line.is_optional or line.parent_id.is_optional
+            if optional and bundles:
+                raise ValidationError(_(
+                    "%(section)s is an optional section, so it can't be a bundle. Unset Optional first.",
+                    section=line.name,
+                ))
 
     def _twp_bundle(self):
         self.ensure_one()
