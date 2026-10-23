@@ -15,6 +15,9 @@ EXCLUSION_DEPENDS = (
     "order_line.display_type",
 )
 
+# What the product catalog lists as groups to add to.
+GROUP_TYPES = ("line_section", "line_subsection")
+
 
 class SaleOrder(models.Model):
     _inherit = "sale.order"
@@ -596,3 +599,124 @@ class SaleOrder(models.Model):
         return super()._get_order_lines_to_report().filtered(
             lambda line: not line.twp_hide_on_documents and not line.twp_not_chosen
         )
+
+    # ------------------------------------------------------------
+    # Product catalog
+    # ------------------------------------------------------------
+    # Odoo's catalog knows only top-level sections. Here every section and subsection is a group
+    # it can add to, and a line belongs to the innermost one around it, so the same product in
+    # Option 1 and Option 2 is two lines, and a bundle member is counted per bundle.
+
+    def _twp_catalog(self):
+        return self.with_context(twp_catalog_group=True)
+
+    def _get_sections(self, child_field, **kwargs):
+        if child_field != "order_line":
+            return super()._get_sections(child_field, **kwargs)
+        order = self._twp_catalog()
+        lines = order.order_line.sorted("sequence")
+        groups = {}
+        no_section_count = 0
+        for line in lines:
+            if line.display_type in GROUP_TYPES:
+                groups[line.id] = {
+                    "id": line.id,
+                    "name": line.name,
+                    "sequence": line.sequence,
+                    "line_count": 0,
+                    # A subsection under a section is listed under it; one above every section
+                    # stands on its own.
+                    "depth": int(line.display_type == "line_subsection" and bool(line._twp_enclosing_sections())),
+                }
+            elif order._is_line_valid_for_section_line_count(line):
+                group = line.get_parent_section_line()
+                if group.id in groups:
+                    groups[group.id]["line_count"] += 1
+                else:
+                    no_section_count += 1
+        if no_section_count or not groups:
+            groups[False] = {
+                "id": False,
+                "name": self.env._("No Section"),
+                "sequence": lines[0].sequence - 1 if lines else 0,
+                "line_count": no_section_count,
+                "depth": 0,
+            }
+        return sorted(groups.values(), key=lambda group: group["sequence"])
+
+    def _get_product_catalog_record_lines(self, product_ids, **kwargs):
+        return super(SaleOrder, self._twp_catalog())._get_product_catalog_record_lines(product_ids, **kwargs)
+
+    def _update_order_line_info(self, product_id, quantity, *, section_id=False, child_field="order_line", **kwargs):
+        order = self._twp_catalog()
+        member = order.order_line.filtered(
+            lambda line: line.product_id.id == product_id
+            and line.get_parent_section_line().id == section_id
+            and line._twp_bundle()
+        )
+        price = super(SaleOrder, order)._update_order_line_info(
+            product_id, quantity, section_id=section_id, child_field=child_field, **kwargs
+        )
+        # Odoo sets the ordered quantity, which a bundle puts back; the catalog's is per bundle.
+        if len(member) == 1 and member.exists() and not member.twp_not_chosen:
+            vals = {"twp_qty_per_bundle": quantity}
+            if not quantity:
+                vals["product_uom_qty"] = 0.0
+            member.write(vals)
+            price = member._get_discounted_price()
+        return price
+
+    def _twp_write_sequences(self, sequences):
+        """Write {line: sequence}, then hold the bundles once.
+
+        Line by line, a product could pass through a bundle on its way and take its quantity.
+        """
+        for line, sequence in sequences.items():
+            if line.sequence != sequence:
+                line.with_context(twp_bundle_sync=True).sequence = sequence
+        self.order_line._twp_sync_bundles()
+
+    def _get_new_line_sequence(self, child_field, section_id):
+        if child_field != "order_line":
+            return super()._get_new_line_sequence(child_field, section_id)
+        lines = self.order_line.sorted("sequence")
+        sequence = (lines and lines[-1].sequence + 1) or 10
+        # A group's new line goes after its own lines: before the next section or subsection, so
+        # a section's lands above its subsections rather than in the last of them.
+        if section_id and section_id in lines.ids:
+            following = lines[lines.ids.index(section_id) + 1:]
+        else:
+            following = lines
+        before = following.filtered(lambda line: line.display_type in GROUP_TYPES)[:1]
+        if before:
+            sequence = before.sequence
+            self._twp_write_sequences({
+                line: line.sequence + 1 for line in lines if line.sequence >= sequence
+            })
+        return sequence
+
+    def _resequence_sections(self, sections, child_field, **kwargs):
+        """Move a section, with its subsections and their lines, before or after another.
+
+        Odoo moves a section's own lines only, leaving its subsections' lines behind.
+        Subsections stay where they are in their section.
+        """
+        if child_field != "order_line":
+            return super()._resequence_sections(sections, child_field, **kwargs)
+        lines = self.order_line.sorted("sequence")
+        move, target = (lines.filtered(lambda line, s=section: line.id == s["id"]) for section in sections)
+        if not all(
+            group.display_type in GROUP_TYPES and not group._twp_enclosing_sections()
+            for group in (move, target)
+        ) or move == target:
+            return {}
+        move_block = move | move._twp_section_members()
+        target_block = target | target._twp_section_members()
+        remaining = lines - move_block
+        if lines.ids.index(move.id) < lines.ids.index(target.id):
+            index = remaining.ids.index(target_block.sorted("sequence")[-1].id) + 1
+        else:
+            index = remaining.ids.index(target.id)
+        ordered = remaining[:index] + move_block.sorted("sequence") + remaining[index:]
+        self._twp_write_sequences({line: sequence for sequence, line in enumerate(ordered, start=1)})
+        return {line.id: line.sequence for line in ordered if line.display_type in GROUP_TYPES}

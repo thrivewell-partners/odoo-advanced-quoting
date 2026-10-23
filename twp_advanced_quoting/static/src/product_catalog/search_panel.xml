@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<templates>
+
+    <!-- A subsection sits indented under its section, with no drag handle. -->
+    <t t-inherit="account.ProductCatalogSearchPanelContent" t-inherit-mode="extension">
+        <xpath expr="//li[@t-as='sectionId']" position="attributes">
+            <attribute name="draggable"/>
+            <attribute name="t-att-draggable">this.twpIsSubsection(sectionId) ? 'false' : 'true'</attribute>
+            <attribute name="t-att-style">this.twpIsSubsection(sectionId) ? 'padding-left: 1.25rem !important;' : ''</attribute>
+        </xpath>
+        <xpath expr="//li[@t-as='sectionId']//span[hasclass('o_row_handle')]" position="attributes">
+            <attribute name="t-att-class">{ 'invisible': this.twpIsSubsection(sectionId) }</attribute>
+        </xpath>
+    </t>
+
+</templates>

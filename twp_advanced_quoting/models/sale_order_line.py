@@ -424,6 +424,23 @@ class SaleOrderLine(models.Model):
         return values
 
     # ------------------------------------------------------------
+    # Product catalog
+    # ------------------------------------------------------------
+
+    def get_parent_section_line(self):
+        # In the catalog a line belongs to the innermost section or subsection around it.
+        if self.env.context.get("twp_catalog_group") and not self.display_type:
+            return self._twp_enclosing_sections()[:1]
+        return super().get_parent_section_line()
+
+    def _get_product_catalog_lines_data(self, **kwargs):
+        # A bundle member is counted per bundle, as it is typed in the editor.
+        data = super()._get_product_catalog_lines_data(**kwargs)
+        if len(self) == 1 and self._twp_bundle():
+            data["quantity"] = self.twp_qty_per_bundle
+        return data
+
+    # ------------------------------------------------------------
     # Invoicing
     # ------------------------------------------------------------
 
