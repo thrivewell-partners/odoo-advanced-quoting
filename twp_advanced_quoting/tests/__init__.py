@@ -10,3 +10,4 @@ from . import test_m4_styles
 from . import test_m5_hardening
 from . import test_m5_stock
 from . import test_m6_catalog
+from . import test_m6_line_descriptions

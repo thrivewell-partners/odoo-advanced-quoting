@@ -72,12 +72,6 @@
                 <span t-out="twp_numbers.get(line.id, '')"/>
             </td>
         </xpath>
-        <xpath expr="//span[@name='span_product_name']" position="attributes">
-            <attribute name="t-if">not twp_show_code</attribute>
-        </xpath>
-        <xpath expr="//span[@name='span_product_name']" position="after">
-            <span t-if="twp_show_code" t-out="line._twp_name_without_code()" t-options="{'widget': 'text'}"/>
-        </xpath>
         <xpath expr="//tr[@name='tr_product']/td[@name='td_product_name']" position="after">
             <td t-if="twp_show_code" name="twp_td_code" class="text-nowrap">
                 <span t-out="line._twp_code()"/>
@@ -155,17 +149,27 @@
         <xpath expr="//td[@name='td_section_group_priceunit']/span" position="attributes">
             <attribute name="t-out">section_line['price_subtotal'] / line.twp_bundle_qty if line.twp_is_bundle and line.twp_bundle_qty else section_line['price_subtotal']</attribute>
         </xpath>
-        <xpath expr="//span[@name='span_product_name']" position="before">
+        <!-- Sales Management replaces Odoo's quantity block with its own, so the cell's first
+             child is whichever of the two is installed. -->
+        <xpath expr="//tr[@name='tr_product']/td[@name='td_product_quantity']/*[1]" position="attributes">
+            <attribute name="t-if">not twp_per_bundle</attribute>
+        </xpath>
+    </template>
+
+    <!-- The line's description, apart from the rest so that it applies before any other module's
+         view. eCommerce replaces Odoo's description with a link to the product's page, and a
+         view applied after that finds nothing to change: the code column then printed the
+         description twice. Wrapped first, whatever replaces the description inside is still
+         hidden behind the code column's own. -->
+    <template id="sale_order_portal_content_name" inherit_id="sale.sale_order_portal_content" priority="15">
+        <xpath expr="//span[@name='span_product_name']" position="replace">
             <t t-set="twp_per_bundle_label" t-value="line._twp_per_bundle_label() if twp_per_bundle else ''"/>
             <t t-if="twp_per_bundle_label">
                 <span class="text-nowrap twp_qty_per_bundle" t-out="twp_per_bundle_label"/>
                 <t t-out="' '"/>
             </t>
-        </xpath>
-        <!-- Sales Management replaces Odoo's quantity block with its own, so the cell's first
-             child is whichever of the two is installed. -->
-        <xpath expr="//tr[@name='tr_product']/td[@name='td_product_quantity']/*[1]" position="attributes">
-            <attribute name="t-if">not twp_per_bundle</attribute>
+            <t t-if="not twp_show_code">$0</t>
+            <span t-else="" t-out="line._twp_name_without_code()" t-options="{'widget': 'text'}"/>
         </xpath>
     </template>
 
