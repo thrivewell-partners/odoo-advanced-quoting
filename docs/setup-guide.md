@@ -92,7 +92,9 @@ Bring your price books as a spreadsheet and we load them, with each product's ca
 - **Alternatives:** make a section for each choice and choose **Set Alternative**. Choices that
   belong together share an Option Group. An add-on is **Set Add-on**. When the customer decides,
   **Mark Chosen**, and the total follows. **Unset Alternative** or **Unset Add-on** makes it an
-  ordinary section again, counted in the total.
+  ordinary section again, counted in the total. On the quote each option prints as its own
+  shaded block with a tag, in the colour from **Settings > Document Layout** on the PDF and the
+  website's theme colour online.
 - **Lines on their own after a group:** open the group's **⋮** menu and choose **Add Standalone
   Lines**. A "Standalone items" divider appears after the group; the lines added below it belong
   to no bundle or option and print flush left at their own prices. The divider itself never
