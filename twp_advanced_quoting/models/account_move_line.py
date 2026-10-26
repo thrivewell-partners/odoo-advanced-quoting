@@ -6,6 +6,7 @@ class AccountMoveLine(models.Model):
     _inherit = "account.move.line"
 
     twp_is_bundle = fields.Boolean(string="Bundle")
+    twp_standalone = fields.Boolean(string="Standalone Lines")
     twp_qty_per_bundle = fields.Float(string="Per Bundle", digits="Product Unit")
     twp_hide_on_documents = fields.Boolean(string="Hide on Documents")
     twp_hide_price = fields.Boolean(string="Hide Price")

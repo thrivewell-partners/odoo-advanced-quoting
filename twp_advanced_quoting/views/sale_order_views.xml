@@ -51,6 +51,7 @@
                 <field name="twp_option_group" column_invisible="1"/>
                 <field name="twp_option_chosen" column_invisible="1"/>
                 <field name="twp_not_chosen" column_invisible="1"/>
+                <field name="twp_standalone" column_invisible="1"/>
             </xpath>
             <!-- Inside a bundle only the quantity per bundle is typed (D15). -->
             <xpath expr="//field[@name='order_line']/list/field[@name='product_uom_qty']" position="before">

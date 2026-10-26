@@ -1,7 +1,12 @@
-import { SectionAndNoteListRenderer } from "@account/components/section_and_note_fields_backend/section_and_note_fields_backend";
+import {
+    getSectionRecords,
+    SectionAndNoteListRenderer,
+} from "@account/components/section_and_note_fields_backend/section_and_note_fields_backend";
 import { SaleOrderLineListRenderer } from "@sale/js/sale_order_line_field/sale_order_line_field";
 import { SaleOrderTemplateLineListRenderer } from "@sale_management/fields/sale_order_template_line_field/sale_order_template_line_field";
 import { useSubEnv } from "@odoo/owl";
+import { _t } from "@web/core/l10n/translation";
+import { x2ManyCommands } from "@web/core/orm_service";
 import { patch } from "@web/core/utils/patch";
 
 // Cells a bundle's or an option's row keeps beside its section total.
@@ -44,7 +49,9 @@ patch(SectionAndNoteListRenderer.prototype, {
      */
     getRowClass(record) {
         const classNames = [super.getRowClass(record)];
-        if (this.isSection(record) && twpGroups(record)) {
+        if (record.data.twp_standalone) {
+            classNames.push("o_twp_standalone");
+        } else if (this.isSection(record) && twpGroups(record)) {
             const data = record.data;
             const kind = data.twp_is_bundle
                 ? "o_twp_bundle"
@@ -71,6 +78,13 @@ patch(SectionAndNoteListRenderer.prototype, {
      * lines them up. All of them are kept together, each empty where it does not apply.
      */
     getSectionColumns(columns, record) {
+        if (record.data.twp_standalone) {
+            // A divider, not a heading: no total of its own, its label across the row.
+            const kept = columns.filter((col) => col.widget === "handle" || col.name === this.titleField);
+            return kept.map((col) =>
+                col.name === this.titleField ? { ...col, colspan: columns.length - kept.length + 1 } : { ...col }
+            );
+        }
         const sectionColumns = super.getSectionColumns(columns, record);
         const isOption = record.data.twp_option_mode && record.data.twp_option_mode !== "included";
         const extra = TWP_SECTION_COLUMNS.filter((name) => columns.some((col) => col.name === name));
@@ -96,6 +110,7 @@ patch(SaleOrderLineListRenderer.prototype, {
             "twp_option_mode",
             "twp_option_group",
             "twp_option_chosen",
+            "twp_standalone",
             "twp_qty_per_bundle",
             "twp_hide_on_documents",
             "twp_hide_price"
@@ -114,8 +129,15 @@ patch(SaleOrderLineListRenderer.prototype, {
         });
     },
 
+    /**
+     * Unset, an option is a plain section again and leaves its set of alternatives.
+     */
     async twpSetOptionMode(record, mode) {
-        await record.update({ twp_option_mode: mode, twp_option_chosen: false });
+        const changes = { twp_option_mode: mode, twp_option_chosen: false };
+        if (mode === "included") {
+            changes.twp_option_group = false;
+        }
+        await record.update(changes);
     },
 
     /**
@@ -143,11 +165,15 @@ patch(SaleOrderLineListRenderer.prototype, {
     },
 
     twpCanSetBundle(record) {
+        if (record.data.twp_standalone) {
+            return false;
+        }
         return record.data.twp_is_bundle || (!this.twpItemized(record) && !this.twpInOptional(record));
     },
 
     twpCanSetOption(record) {
         return (
+            !record.data.twp_standalone &&
             !this.twpInOptional(record) &&
             (!this.twpItemized(record) || Boolean(record.model.root?.data?.twp_allow_options))
         );
@@ -186,6 +212,49 @@ patch(SaleOrderLineListRenderer.prototype, {
             await this.addRowInSection(record, false);
         } finally {
             this.twpAdjustment = false;
+        }
+    },
+
+    /**
+     * A divider after this section and everything in it: the lines added below it stand on
+     * their own, in no group.
+     */
+    twpCanAddStandalone(record) {
+        return this.isTopSection(record) && !record.data.twp_standalone;
+    },
+
+    async twpAddStandalone(record) {
+        const canProceed = await this.props.list.leaveEditMode({ canAbandon: false });
+        if (!canProceed) {
+            return;
+        }
+        const index =
+            this.props.list.records.indexOf(record) + getSectionRecords(this.props.list, record).length - 1;
+        await this.props.list.addNewRecordAtIndex(index, {
+            context: {
+                default_display_type: "line_section",
+                default_twp_standalone: true,
+                default_name: _t("Standalone items"),
+            },
+        });
+    },
+
+    /**
+     * Deleting a divider deletes it alone: its lines join the section above again.
+     */
+    async deleteSection(record) {
+        if (!record.data.twp_standalone) {
+            return super.deleteSection(record);
+        }
+        if (this.editedRecord && this.editedRecord !== record) {
+            const left = await this.props.list.leaveEditMode({ canAbandon: false });
+            if (!left) {
+                return;
+            }
+        }
+        if (this.activeActions.onDelete) {
+            const method = this.activeActions.unlink ? "unlink" : "delete";
+            await this.props.list.applyCommands([x2ManyCommands[method](record.resId || record._virtualId)]);
         }
     },
 

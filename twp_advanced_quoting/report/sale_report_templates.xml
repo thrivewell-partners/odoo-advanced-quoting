@@ -138,8 +138,16 @@
 
         <!-- A bundle prints as one row: its packages, the price of one, and its amount. Odoo's
              own section row follows it as the next branch, so every other section is untouched. -->
+        <!-- A standalone divider ends the group above it: it prints no row of its own, and the
+             lines below it print flush left, at their own prices, as lines above every section do. -->
+        <xpath expr="//t[@t-if='is_section']/t[@t-set='collapse_prices']" position="before">
+            <t t-if="line.twp_standalone">
+                <t t-set="current_section" t-value="None"/>
+            </t>
+        </xpath>
         <xpath expr="//tr[@name='tr_section']" position="before">
-            <tr t-if="(is_section or is_subsection) and line.twp_is_bundle" name="twp_tr_bundle"
+            <t t-if="line.twp_standalone" name="twp_standalone"/>
+            <tr t-elif="(is_section or is_subsection) and line.twp_is_bundle" name="twp_tr_bundle"
                 t-att-class="'fw-bolder o_line_section' if is_section else 'fw-bold o_line_subsection'">
                 <t t-set="twp_bundle_row" t-value="line._twp_bundle_row(price_field)"/>
                 <td t-if="twp_show_numbers" name="twp_td_line_number" class="text-end">

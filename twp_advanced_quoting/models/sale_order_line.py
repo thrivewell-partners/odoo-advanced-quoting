@@ -25,6 +25,17 @@ BUNDLE_FIELDS = {
 # Settled when the order is confirmed (D3); changed again only once it is a quote.
 OPTION_FIELDS = {"twp_option_mode", "twp_option_group", "twp_option_chosen"}
 
+# What a standalone divider can't be: it groups nothing, so it neither prices nor hides as one.
+STANDALONE_FIELDS = (
+    "display_type",
+    "twp_standalone",
+    "twp_is_bundle",
+    "twp_option_mode",
+    "collapse_prices",
+    "collapse_composition",
+    "is_optional",
+)
+
 
 class SaleOrderLine(models.Model):
     _inherit = "sale.order.line"
@@ -65,6 +76,11 @@ class SaleOrderLine(models.Model):
         copy=False,
         readonly=True,
         help="Left out when the order was confirmed: kept at quantity 0 as a record, never printed.",
+    )
+    twp_standalone = fields.Boolean(
+        string="Standalone Lines",
+        help="Ends the group above it. The lines below print on their own, each with its price, "
+             "and this row never prints.",
     )
     twp_quoted_qty = fields.Float(
         string="Quoted Quantity",
@@ -270,6 +286,24 @@ class SaleOrderLine(models.Model):
                     section=line.name,
                 ))
 
+    @api.constrains(*STANDALONE_FIELDS)
+    def _twp_check_standalone(self):
+        for line in self.filtered("twp_standalone"):
+            if line.display_type != "line_section":
+                raise ValidationError(_("Only a section can start standalone lines."))
+            if (
+                line.twp_is_bundle
+                or line._twp_is_option()
+                or line.collapse_prices
+                or line.collapse_composition
+                or line.is_optional
+            ):
+                raise ValidationError(_(
+                    "%(section)s starts standalone lines, so it can't be a bundle, an alternative, "
+                    "an add-on or optional, and can't hide its prices or lines.",
+                    section=line.name,
+                ))
+
     def _twp_check_options_editable(self, vals):
         if OPTION_FIELDS & set(vals) and any(
             line.display_type and line.order_id.state not in ("draft", "sent") for line in self
@@ -329,6 +363,9 @@ class SaleOrderLine(models.Model):
 
     def write(self, vals):
         vals = self._twp_bundle_vals(vals)
+        if vals.get("twp_option_mode") == "included" and "twp_option_group" not in vals:
+            # An option unset is a plain section again, and joins no set of alternatives.
+            vals = dict(vals, twp_option_group=False)
         if not self.env.context.get("twp_option_sync"):
             self._twp_check_options_editable(vals)
         result = super().write(vals)
@@ -415,6 +452,8 @@ class SaleOrderLine(models.Model):
     @api.model
     def default_get(self, fields):
         values = super().default_get(fields)
+        if values.get("twp_standalone") and "name" in fields and not values.get("name"):
+            values["name"] = _("Standalone items")
         if self.env.context.get("twp_bundle_adjustment"):
             product = self.env.company._twp_bundle_adjustment_product()
             if product and "product_id" in fields:
@@ -448,6 +487,7 @@ class SaleOrderLine(models.Model):
         values = super()._prepare_invoice_line(**optional_values)
         values.update(
             twp_is_bundle=self.twp_is_bundle,
+            twp_standalone=self.twp_standalone,
             twp_qty_per_bundle=self.twp_qty_per_bundle,
             twp_hide_on_documents=self.twp_hide_on_documents,
             twp_hide_price=self.twp_hide_price,

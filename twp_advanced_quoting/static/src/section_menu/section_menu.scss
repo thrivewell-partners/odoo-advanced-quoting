@@ -57,6 +57,21 @@ table.o_section_and_note_list_view {
         content: "\f066";  // fa-compress
     }
 
+    // A standalone divider reads as a break between groups, not a heading: it never prints.
+    tr.o_twp_standalone > td {
+        border-top: 1px dashed $border-color;
+        font-weight: normal;
+        font-style: italic;
+        color: $text-muted;
+    }
+
+    tr.o_twp_standalone > td:nth-child(2) > .o_field_widget::before {
+        content: "\f148";  // fa-level-up
+        font-family: FontAwesome;
+        font-style: normal;
+        margin-right: .4rem;
+    }
+
     // A line hidden on documents is greyed, its eye crossed out; it still counts in the total.
     tr.o_twp_hidden_line > td.o_data_cell:not(.o_handle_cell, [name="twp_hide_on_documents"]) {
         opacity: .5;

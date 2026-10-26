@@ -4,7 +4,15 @@
     <t t-inherit="sale.ListRenderer.RecordRow" t-inherit-mode="extension">
         <!-- A bundle always hides its members' prices; Unset Bundle shows them again. -->
         <xpath expr="//DropdownItem[contains(@onSelected, 'collapse_prices')]" position="attributes">
-            <attribute name="t-if">props.hidePrices and !record.data.twp_is_bundle</attribute>
+            <attribute name="t-if">props.hidePrices and !record.data.twp_is_bundle and !record.data.twp_standalone</attribute>
+        </xpath>
+        <!-- A standalone divider groups nothing, so it neither hides its lines nor takes a
+             subsection. -->
+        <xpath expr="//DropdownItem[contains(@onSelected, 'collapse_composition')]" position="attributes">
+            <attribute name="t-if">props.hideComposition and !record.data.twp_standalone</attribute>
+        </xpath>
+        <xpath expr="//DropdownItem[contains(@onSelected, 'addRowInSection(record, true)')]" position="attributes">
+            <attribute name="t-if">!record.data.twp_standalone</attribute>
         </xpath>
         <!-- Odoo's optional section prints 0.00 and reads like Set Add-on beside it, so it is
              offered only to undo it. -->
@@ -19,6 +27,9 @@
             </DropdownItem>
             <DropdownItem t-if="record.data.twp_is_bundle" onSelected="() => this.twpAddAdjustment(record)">
                 <i class="me-1 fa fa-fw fa-wrench"/><span>Add Adjustment</span>
+            </DropdownItem>
+            <DropdownItem t-if="this.twpCanAddStandalone(record)" onSelected="() => this.twpAddStandalone(record)">
+                <i class="me-1 fa fa-fw fa-level-up"/><span>Add Standalone Lines</span>
             </DropdownItem>
             <t t-if="!this.twpOptionsLocked(record)">
                 <DropdownItem
@@ -45,7 +56,9 @@
                     t-if="record.data.twp_option_mode !== 'included'"
                     onSelected="() => this.twpSetOptionMode(record, 'included')"
                 >
-                    <i class="me-1 fa fa-fw fa-check"/><span>Include in Total</span>
+                    <i class="me-1 fa fa-fw fa-undo"/>
+                    <span t-if="record.data.twp_option_mode === 'alternative'">Unset Alternative</span>
+                    <span t-else="">Unset Add-on</span>
                 </DropdownItem>
             </t>
         </t>
