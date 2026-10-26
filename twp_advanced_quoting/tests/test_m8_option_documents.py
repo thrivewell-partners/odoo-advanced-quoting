@@ -85,6 +85,13 @@ class TestOptionBlocks(OptionBlockCase, TransactionCase):
         self.assertIn("#5e4766", base64.b64decode(asset.datas).decode())
 
 
+    def test_installed_stylesheet_carries_the_options(self):
+        # The stylesheet as Odoo serves it, not as it would be rendered now: the module rebuilds it
+        # on install and upgrade, since Odoo only does when a layout changes.
+        asset = self.env.ref("web.asset_styles_company_report")
+        self.assertIn(".twp_opt_chosen", base64.b64decode(asset.datas).decode())
+
+
 @tagged("post_install", "-at_install")
 class TestOptionBlocksPortal(OptionBlockCase, HttpCase):
 
