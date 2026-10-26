@@ -9,11 +9,13 @@
     background-color: mix($white, $primary, 90%);
 }
 
-.twp_opt > td:first-child {
+.twp_opt > td:first-child,
+.twp_opt_head > td[name^="td_section_name"] {
     border-left-color: mix($white, $primary, 50%);
 }
 
-.twp_opt_chosen > td:first-child {
+.twp_opt_chosen > td:first-child,
+.twp_opt_chosen.twp_opt_head > td[name^="td_section_name"] {
     border-left-color: $primary;
 }
 

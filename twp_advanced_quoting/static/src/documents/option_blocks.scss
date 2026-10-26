@@ -4,7 +4,10 @@
 // Document Layout on the PDF (report/company_report_styles.xml) and from the website's theme
 // online (option_blocks.frontend.scss).
 
-.twp_opt > td:first-child {
+// The online quote keeps a heading's name in three cells, one per screen size, the others
+// hidden; whichever shows starts the row.
+.twp_opt > td:first-child,
+.twp_opt_head > td[name^="td_section_name"] {
     border-left: 3px solid transparent;
 }
 
