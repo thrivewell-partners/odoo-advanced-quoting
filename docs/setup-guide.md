@@ -91,7 +91,12 @@ Bring your price books as a spreadsheet and we load them, with each product's ca
   hidden line for markup or labor priced into the package.
 - **Alternatives:** make a section for each choice and choose **Set Alternative**. Choices that
   belong together share an Option Group. An add-on is **Set Add-on**. When the customer decides,
-  **Mark Chosen**, and the total follows.
+  **Mark Chosen**, and the total follows. **Unset Alternative** or **Unset Add-on** makes it an
+  ordinary section again, counted in the total.
+- **Lines on their own after a group:** open the group's **⋮** menu and choose **Add Standalone
+  Lines**. A "Standalone items" divider appears after the group; the lines added below it belong
+  to no bundle or option and print flush left at their own prices. The divider itself never
+  prints. Deleting it deletes only the divider, and its lines join the group above.
 - **Hiding one line:** the eye at the start of a line keeps it off the PDF, the online page and
   the invoice. It still counts in the price.
 - **Confirming** a quote with options asks what the customer chose. What they didn't choose stays
