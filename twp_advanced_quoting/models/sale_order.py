@@ -139,7 +139,14 @@ class SaleOrder(models.Model):
 
     def write(self, vals):
         allowing = self.filtered(lambda order: not order.twp_allow_options) if vals.get("twp_allow_options") else self.browse()
-        result = super().write(vals)
+        # The editor saves its lines one at a time. Held after each, a line passing a bundle on
+        # its way to its new place would take the bundle's quantity and keep it, so the bundles
+        # are held once, with every line in place.
+        deferring = "order_line" in vals and not self.env.context.get("twp_bundle_deferred")
+        orders = self.with_context(twp_bundle_deferred=True) if deferring else self
+        result = super(SaleOrder, orders).write(vals)
+        if deferring:
+            self.order_line._twp_sync_deferred_bundles()
         if "twp_document_style_id" in vals or vals.get("twp_allow_options"):
             self._twp_check_style_rights(vals)
         allowing._twp_log_allow_options()

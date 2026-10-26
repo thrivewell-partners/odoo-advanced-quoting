@@ -60,6 +60,38 @@ class TestStandaloneLines(StandaloneCase, TransactionCase):
         self.assertEqual(thermostat.product_uom_qty, 2)
         self.assertEqual(self.line(order, self.bracket).product_uom_qty, 15)
 
+    def test_saving_a_divider_leaves_the_lines_below_alone(self):
+        """The editor saves a new divider after the bundle with the lines below it renumbered.
+
+        Written one at a time, Option 1 moved first and left its line under the bundle for a
+        moment, which took the bundle's quantity: 2 became 10.
+        """
+        order = self.make_order()
+        option = self.section(order, "Option 1")
+        line = self.line(order, self.option_one)
+        order.write({"order_line": [
+            Command.update(option.id, {"sequence": 22}),
+            Command.update(line.id, {"sequence": 23}),
+            Command.create({
+                "display_type": "line_section",
+                "name": "Standalone items",
+                "twp_standalone": True,
+                "sequence": 20,
+            }),
+        ]})
+        self.assertEqual(line.product_uom_qty, 2)
+        self.assertFalse(line.twp_in_bundle)
+        self.assertEqual(self.line(order, self.bracket).product_uom_qty, 15)
+
+    def test_a_priced_line_added_to_a_bundle_keeps_its_price(self):
+        order = self.make_order(bundle_only=True)
+        order.write({"order_line": [Command.create({
+            "product_id": self.thermostat.id, "product_uom_qty": 1, "price_unit": 150, "sequence": 14,
+        })]})
+        thermostat = self.line(order, self.thermostat)
+        self.assertEqual(thermostat.product_uom_qty, 5)
+        self.assertEqual(thermostat.price_unit, 150)
+
     def test_total(self):
         self.assertEqual(self.make_standalone_order().amount_untaxed, 6960.0)
 

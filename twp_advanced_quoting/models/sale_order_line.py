@@ -357,8 +357,10 @@ class SaleOrderLine(models.Model):
             # A price given with the line survives its first bundle quantity. Odoo counts it as
             # not typed by hand, so the quantity change would otherwise reprice it from the product.
             priced = self.browse([line.id for line, vals in zip(lines, vals_list) if "price_unit" in vals])
-            with self.env.protecting([self._fields["price_unit"], self._fields["technical_price_unit"]], priced):
-                lines.order_id.order_line._twp_sync_bundles()
+            if self.env.context.get("twp_bundle_deferred"):
+                self.env.cr.cache.setdefault("twp_bundle_priced", set()).update(priced.ids)
+            else:
+                lines.order_id.order_line._twp_sync_bundles_keeping(priced)
         return lines
 
     def write(self, vals):
@@ -373,9 +375,22 @@ class SaleOrderLine(models.Model):
             vals.get("twp_option_chosen") or vals.get("twp_option_mode") == "alternative" or "twp_option_group" in vals
         ):
             self._twp_keep_one_alternative_chosen()
-        if not self.env.context.get("twp_bundle_sync") and BUNDLE_FIELDS & set(vals):
+        if (
+            not self.env.context.get("twp_bundle_sync")
+            and not self.env.context.get("twp_bundle_deferred")
+            and BUNDLE_FIELDS & set(vals)
+        ):
             self.order_id.order_line._twp_sync_bundles()
         return result
+
+    def _twp_sync_bundles_keeping(self, priced):
+        with self.env.protecting([self._fields["price_unit"], self._fields["technical_price_unit"]], priced):
+            self._twp_sync_bundles()
+
+    def _twp_sync_deferred_bundles(self):
+        """Hold the bundles once, after an order has written all its lines (see SaleOrder.write)."""
+        priced = self.browse(self.env.cr.cache.pop("twp_bundle_priced", ())).exists() & self
+        self._twp_sync_bundles_keeping(priced)
 
     def copy_data(self, default=None):
         # A copy of a confirmed order quotes its options again at the quantities they were quoted at.
