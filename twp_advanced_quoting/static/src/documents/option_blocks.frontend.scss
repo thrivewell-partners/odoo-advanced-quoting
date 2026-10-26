@@ -1,0 +1,38 @@
+// The customer's online quote takes its colours from the website's theme, as the rest of the page
+// does. The PDF takes them from the company's Document Layout instead.
+
+.twp_opt > td {
+    background-color: mix($white, $primary, 96%);
+}
+
+.twp_opt_chosen > td {
+    background-color: mix($white, $primary, 90%);
+}
+
+.twp_opt > td:first-child {
+    border-left-color: mix($white, $primary, 50%);
+}
+
+.twp_opt_chosen > td:first-child {
+    border-left-color: $primary;
+}
+
+.twp_opt_head > td {
+    border-top-color: mix($white, $primary, 75%);
+}
+
+.twp_badge {
+    color: $primary;
+    border-color: $primary;
+}
+
+.twp_opt_chosen .twp_badge {
+    color: color-contrast($primary);
+    background-color: $primary;
+}
+
+.twp_opt_chosen .twp_option_note,
+.twp_set_head > td,
+.twp_or > td {
+    color: $primary;
+}

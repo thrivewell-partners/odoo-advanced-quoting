@@ -16,9 +16,17 @@ def post_init_hook(env):
         env["res.company"].search([("twp_default_document_style_id", "=", False)]).write(
             {"twp_default_document_style_id": style.id}
         )
+    # Odoo rebuilds the company report stylesheet only when a layout changes; the options'
+    # colours are in it.
+    env["res.company"]._update_asset_style()
 
 
 def uninstall_hook(env):
+    # The company report stylesheet is rebuilt without the options' colours.
+    styles = env.ref("twp_advanced_quoting.styles_company_report", raise_if_not_found=False)
+    if styles:
+        styles.active = False
+        env["res.company"]._update_asset_style()
     report = env.ref("sale.action_report_saleorder", raise_if_not_found=False)
     if report:
         report.print_report_name = SALE_REPORT_NAME

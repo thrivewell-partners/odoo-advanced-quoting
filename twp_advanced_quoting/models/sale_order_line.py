@@ -264,6 +264,55 @@ class SaleOrderLine(models.Model):
             return _("Chosen, included in the total")
         return _("Not included in the total")
 
+    def _twp_option_block(self):
+        """The alternative or add-on this row prints inside on a quote, itself included."""
+        self.ensure_one()
+        if self.order_id.state not in ("draft", "sent") or self._twp_is_special():
+            return self.browse()
+        if self._twp_is_option():
+            return self
+        return self._twp_option_section()
+
+    def _twp_option_row_class(self):
+        """The classes that set an option apart on a quote: its heading or a row inside it, chosen
+        or still open. Their colours come from the company's Document Layout on the PDF, and from
+        the website's theme online.
+        """
+        self.ensure_one()
+        option = self._twp_option_block()
+        if not option:
+            return ""
+        return " ".join((
+            "twp_opt",
+            "twp_opt_head" if option == self else "twp_opt_member",
+            "twp_opt_chosen" if option.twp_option_chosen else "twp_opt_open",
+        ))
+
+    def _twp_option_badge(self):
+        """The tag before an option's name on a quote: Alternative, Add-on, or Chosen."""
+        self.ensure_one()
+        if not self._twp_is_option() or self.order_id.state not in ("draft", "sent"):
+            return ""
+        if self.twp_option_chosen:
+            return _("Chosen")
+        return dict(self._fields["twp_option_mode"]._description_selection(self.env))[self.twp_option_mode]
+
+    def _twp_alternative_lead(self):
+        """What prints above an alternative on a quote: "first" over the first of its set, "next"
+        (an OR) over each other one, or nothing over one that stands alone.
+        """
+        self.ensure_one()
+        if (
+            not self._twp_is_option()
+            or self.twp_option_mode != "alternative"
+            or self.order_id.state not in ("draft", "sent")
+        ):
+            return ""
+        alternatives = self._twp_alternatives().sorted("sequence")
+        if len(alternatives) < 2:
+            return ""
+        return "first" if self == alternatives[0] else "next"
+
     def _twp_keep_one_alternative_chosen(self):
         """A chosen alternative unchooses the others in its set."""
         for line in self.filtered(lambda l: l._twp_is_option() and l.twp_option_mode == "alternative" and l.twp_option_chosen):

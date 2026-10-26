@@ -1,0 +1,55 @@
+// An alternative or add-on set apart on the quote, the PDF and the customer's online page alike:
+// its rows shaded as one block with a bar down the left, a tag before its name, and its amounts
+// muted until it is chosen. Only the shapes are here. The colours come from the company's
+// Document Layout on the PDF (report/company_report_styles.xml) and from the website's theme
+// online (option_blocks.frontend.scss).
+
+.twp_opt > td:first-child {
+    border-left: 3px solid transparent;
+}
+
+.twp_opt_head > td {
+    border-top: 1px solid transparent;
+}
+
+.twp_opt_open > td.o_price_total,
+.twp_opt_open > td[name="td_product_subtotal"] {
+    color: $text-muted;
+}
+
+.twp_badge {
+    display: inline-block;
+    margin-right: .25rem;
+    padding: 0 .35rem;
+    border: 1px solid;
+    border-radius: .2rem;
+    background-color: $white;
+    font-size: .7em;
+    font-weight: bold;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    vertical-align: middle;
+}
+
+.twp_option_note {
+    color: $text-muted;
+}
+
+.twp_set_head > td,
+.twp_or > td {
+    border: 0;
+    font-size: .8em;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.twp_set_head > td {
+    padding-top: 1rem;
+    letter-spacing: .08em;
+}
+
+.twp_or > td {
+    padding: .2rem;
+    text-align: center;
+    letter-spacing: .25em;
+}

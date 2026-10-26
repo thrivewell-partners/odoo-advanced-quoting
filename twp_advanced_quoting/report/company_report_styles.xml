@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- An alternative or add-on on the PDF, in the company's own colour from its Document Layout.
+         Odoo builds this stylesheet per company and rebuilds it when the layout changes; the
+         module rebuilds it when it is installed, upgraded and uninstalled. The shapes and sizes
+         are in static/src/documents/option_blocks.scss. -->
+    <template id="styles_company_report" inherit_id="web.styles_company_report">
+        <xpath expr="//t[@t-if=&quot;layout == 'web.external_layout_boxed'&quot;]" position="before">
+                    .twp_opt &gt; td {
+                        background-color: mix(white, <t t-out="primary"/>, 96%);
+                    }
+
+                    .twp_opt_chosen &gt; td {
+                        background-color: mix(white, <t t-out="primary"/>, 90%);
+                    }
+
+                    .twp_opt &gt; td:first-child {
+                        border-left-color: mix(white, <t t-out="primary"/>, 50%);
+                    }
+
+                    .twp_opt_chosen &gt; td:first-child {
+                        border-left-color: <t t-out="primary"/>;
+                    }
+
+                    .twp_opt_head &gt; td {
+                        border-top-color: mix(white, <t t-out="primary"/>, 75%);
+                    }
+
+                    .twp_badge {
+                        color: <t t-out="primary"/>;
+                        border-color: <t t-out="primary"/>;
+                    }
+
+                    .twp_opt_chosen .twp_badge {
+                        color: preview-color-contrast(<t t-out="primary"/>);
+                        background-color: <t t-out="primary"/>;
+                    }
+
+                    .twp_opt_chosen .twp_option_note,
+                    .twp_set_head &gt; td,
+                    .twp_or &gt; td {
+                        color: <t t-out="primary"/>;
+                    }
+        </xpath>
+    </template>
+
+</odoo>

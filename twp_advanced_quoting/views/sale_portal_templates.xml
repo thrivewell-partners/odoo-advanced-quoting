@@ -86,7 +86,6 @@
             <td t-if="twp_show_code" name="twp_td_code"/>
         </xpath>
 
-        <!-- Bundles, as on the PDF -->
         <!-- A standalone divider ends the group above it: it prints no row of its own, and the
              lines below it print flush left, at their own prices, as lines above every section do. -->
         <xpath expr="//t[@t-if='is_section']/t[@t-set='collapse_prices']" position="before">
@@ -94,17 +93,56 @@
                 <t t-set="current_section" t-value="None"/>
             </t>
         </xpath>
+
+        <!-- Alternatives and add-ons set apart, as on the PDF, in the website's colours -->
+        <xpath expr="//t[@t-if='not line.collapse_composition']" position="before">
+            <t t-call="twp_advanced_quoting.option_lead"/>
+        </xpath>
+        <xpath expr="//tr[@name='tr_section']" position="attributes">
+            <attribute name="t-att-class">('fw-bolder o_line_section ' if is_section else 'fw-bold o_line_subsection ') + line._twp_option_row_class()</attribute>
+        </xpath>
+        <xpath expr="//tr[@name='tr_product']" position="attributes">
+            <attribute name="t-att-class">line._twp_option_row_class()</attribute>
+        </xpath>
+        <xpath expr="//tr[@name='tr_note']" position="attributes">
+            <attribute name="class"/>
+            <attribute name="t-attf-class">fst-italic o_line_note {{ line._twp_option_row_class() }}</attribute>
+        </xpath>
+        <xpath expr="//tr[@name='tr_section_group']" position="attributes">
+            <attribute name="class"/>
+            <attribute name="t-attf-class">o_line_section {{ line._twp_option_row_class() }}</attribute>
+        </xpath>
+        <xpath expr="//tr[@name='tr_section']/td[@name='td_section_name_xs']/span" position="before">
+            <t t-call="twp_advanced_quoting.option_badge"/>
+        </xpath>
+        <xpath expr="//tr[@name='tr_section']/td[@name='td_section_name_sm']/span" position="before">
+            <t t-call="twp_advanced_quoting.option_badge"/>
+        </xpath>
+        <xpath expr="//tr[@name='tr_section']/td[@name='td_section_name']/span" position="before">
+            <t t-call="twp_advanced_quoting.option_badge"/>
+        </xpath>
+        <xpath expr="//td[@name='td_section_group_name']/span" position="before">
+            <t t-call="twp_advanced_quoting.option_badge"/>
+        </xpath>
+        <xpath expr="//tr[@name='tr_section']/td[@name='td_section_price']/span" position="after">
+            <t t-call="twp_advanced_quoting.option_note"/>
+        </xpath>
+        <xpath expr="//td[@name='td_section_group_total']/span" position="after">
+            <t t-call="twp_advanced_quoting.option_note"/>
+        </xpath>
+
+        <!-- Bundles, as on the PDF -->
         <xpath expr="//tr[@name='tr_section']" position="before">
             <t t-if="line.twp_standalone" name="twp_standalone"/>
             <tr t-elif="(is_section or is_subsection) and line.twp_is_bundle" name="twp_tr_bundle"
-                t-att-class="'fw-bolder o_line_section' if is_section else 'fw-bold o_line_subsection'">
+                t-att-class="('fw-bolder o_line_section ' if is_section else 'fw-bold o_line_subsection ') + line._twp_option_row_class()">
                 <t t-set="twp_bundle_row" t-value="line._twp_bundle_row(price_field)"/>
                 <td t-if="twp_show_numbers" name="twp_td_line_number" class="text-end">
                     <span t-out="twp_numbers.get(line.id, '')"/>
                 </td>
                 <td name="twp_td_bundle_name" t-att-class="padding_class">
+                    <t t-call="twp_advanced_quoting.option_badge"/>
                     <span t-field="line.name"/>
-                    <t t-call="twp_advanced_quoting.option_note"/>
                 </td>
                 <td t-if="twp_show_code" name="twp_td_code"/>
                 <td name="twp_td_bundle_quantity" class="text-end">
@@ -119,24 +157,13 @@
                 </td>
                 <td name="twp_td_bundle_subtotal" class="text-end o_price_total">
                     <span t-if="twp_bundle_row['show_prices']" class="text-nowrap twp_bundle_amount" t-out="twp_bundle_row['amount']" t-options="{'widget': 'monetary', 'display_currency': sale_order.currency_id}"/>
+                    <t t-call="twp_advanced_quoting.option_note"/>
                 </td>
             </tr>
         </xpath>
         <xpath expr="//tr[@name='tr_section']" position="attributes">
             <attribute name="t-if"/>
             <attribute name="t-elif">is_section or is_subsection</attribute>
-        </xpath>
-        <xpath expr="//tr[@name='tr_section']/td[@name='td_section_name_xs']/span" position="after">
-            <t t-call="twp_advanced_quoting.option_note"/>
-        </xpath>
-        <xpath expr="//tr[@name='tr_section']/td[@name='td_section_name_sm']/span" position="after">
-            <t t-call="twp_advanced_quoting.option_note"/>
-        </xpath>
-        <xpath expr="//tr[@name='tr_section']/td[@name='td_section_name']/span" position="after">
-            <t t-call="twp_advanced_quoting.option_note"/>
-        </xpath>
-        <xpath expr="//td[@name='td_section_group_name']/span" position="after">
-            <t t-call="twp_advanced_quoting.option_note"/>
         </xpath>
 
         <!-- Totals, as on the PDF -->
