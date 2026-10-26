@@ -230,13 +230,12 @@ patch(SaleOrderLineListRenderer.prototype, {
         }
         const index =
             this.props.list.records.indexOf(record) + getSectionRecords(this.props.list, record).length - 1;
-        await this.props.list.addNewRecordAtIndex(index, {
-            context: {
-                default_display_type: "line_section",
-                default_twp_standalone: true,
-                default_name: _t("Standalone items"),
-            },
+        const divider = await this.props.list.addNewRecordAtIndex(index, {
+            context: { default_display_type: "line_section" },
         });
+        // Set rather than defaulted, so the divider is kept when the salesperson clicks away
+        // without typing in it: Odoo drops a new row nobody has changed.
+        await divider.update({ twp_standalone: true, name: _t("Standalone items") });
     },
 
     /**

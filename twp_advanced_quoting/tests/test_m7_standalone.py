@@ -63,12 +63,6 @@ class TestStandaloneLines(StandaloneCase, TransactionCase):
     def test_total(self):
         self.assertEqual(self.make_standalone_order().amount_untaxed, 6960.0)
 
-    def test_new_divider_is_named(self):
-        values = self.env["sale.order.line"].with_context(
-            default_display_type="line_section", default_twp_standalone=True,
-        ).default_get(["name", "twp_standalone"])
-        self.assertEqual(values["name"], "Standalone items")
-
     def test_divider_groups_nothing(self):
         divider = self.divider(self.make_standalone_order())
         for values in (

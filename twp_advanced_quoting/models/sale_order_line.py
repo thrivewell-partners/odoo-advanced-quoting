@@ -452,8 +452,6 @@ class SaleOrderLine(models.Model):
     @api.model
     def default_get(self, fields):
         values = super().default_get(fields)
-        if values.get("twp_standalone") and "name" in fields and not values.get("name"):
-            values["name"] = _("Standalone items")
         if self.env.context.get("twp_bundle_adjustment"):
             product = self.env.company._twp_bundle_adjustment_product()
             if product and "product_id" in fields:
