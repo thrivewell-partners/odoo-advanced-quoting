@@ -65,6 +65,14 @@ class TestBids(TransactionCase):
         bids = self.env["sale.order"].search(self.opportunity.action_twp_view_bids()["domain"])
         self.assertEqual(bids, bid)
 
+    def test_bids_search_on_their_own(self):
+        order_search = self.env["sale.order"].get_views([(False, "search")])["views"]["search"]["arch"]
+        self.assertNotIn("twp_open_bids", order_search, "Quotations and Orders keep Sales' search")
+        view = self.env.ref("twp_bids.view_bid_search")
+        self.assertEqual(self.env.ref("twp_bids.action_bids").search_view_id, view)
+        bid_search = self.env["sale.order"].get_views([(view.id, "search")])["views"]["search"]["arch"]
+        self.assertIn("twp_open_bids", bid_search)
+
     def test_bid_is_titled_and_mailed_as_a_bid(self):
         bid = self._bid()
         self.assertEqual(bid.type_name, "Bid")

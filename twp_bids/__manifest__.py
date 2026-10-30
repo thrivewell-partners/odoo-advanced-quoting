@@ -12,7 +12,7 @@ an ordinary quotation with the next quote number, and marks the other open bids 
 opportunity lost; from there it follows the normal Sales process. A bid can't be confirmed or
 accepted online until it is won.
 """,
-    "version": "19.0.0.1.0",
+    "version": "19.0.0.2.0",
     "category": "Sales/Sales",
     "license": "LGPL-3",
     "author": "ThriveWell Partners",
