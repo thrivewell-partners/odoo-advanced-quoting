@@ -137,6 +137,15 @@ class TestBids(TransactionCase):
             self.assertNotEqual(order.order_line.name, "Changed on the copy")
         self.assertFalse(first.order_line & (bid.order_line | second.order_line))
 
+    def test_a_lost_bid_is_duplicated_as_an_open_bid(self):
+        bid = self._bid()
+        bid.action_twp_bid_lost()
+        arch = self.env["sale.order"].get_view(self.env.ref("sale.view_order_form").id, "form")["arch"]
+        self.assertIn('invisible="not twp_is_bid or not id"', arch.split('name="action_twp_copy_to_customers"')[1][:80])
+        copy = self._duplicate(bid, self.bidder_b)
+        self.assertEqual((copy.twp_is_bid, copy.twp_bid_status, copy.state), (True, "open", "draft"))
+        self.assertEqual((bid.twp_bid_status, bid.state), ("lost", "cancel"), "The lost bid stays lost")
+
     def test_duplicate_onto_another_project(self):
         bid = self._bid()
         other = self.env["crm.lead"].create({
