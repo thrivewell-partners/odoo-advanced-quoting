@@ -113,6 +113,16 @@
                              help="On the online quote, the customer picks one alternative in each set and adds or removes add-ons, until they accept. Each choice is noted in the quote's chatter. Salespeople can still record the choice for them.">
                         <field name="twp_portal_choice"/>
                     </setting>
+                    <setting id="twp_sale_layout" company_dependent="1" string="Quote and Order Layout"
+                             help="Compact puts the company and the number on one line, the customer, the quote and the job side by side, and shades every other line, so more fits on a page. Invoices keep the company's Document Layout.">
+                        <div class="content-group mt16">
+                            <field name="twp_sale_layout" widget="radio"/>
+                            <div class="row mt8" invisible="twp_sale_layout != 'compact'">
+                                <label for="twp_report_icon" string="Icon" class="col-lg-4 o_light_label"/>
+                                <field name="twp_report_icon" widget="image" class="w-auto" options="{'size': [0, 48]}"/>
+                            </div>
+                        </div>
+                    </setting>
                     <setting id="twp_document_styles" company_dependent="1" string="Document Styles"
                              help="A quote takes the style its customer's tags give it: itemized or grouped, its title, totals and columns. Customers with none of the styles' tags get the default.">
                         <div class="content-group mt16">

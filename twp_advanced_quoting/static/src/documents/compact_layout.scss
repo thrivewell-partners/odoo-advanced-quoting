@@ -1,0 +1,185 @@
+// The compact layout for quotes and orders (report/compact_layout.xml). Tables only: wkhtmltopdf
+// has no flexbox or grid. Only the shapes are here; the title, the rule, the total and the
+// tagline take the company's colours from its Document Layout (report/company_report_styles.xml).
+// The header and footer print as documents of their own, so their rules stand on their own.
+
+$twp-cx-muted: #5b6873;
+$twp-cx-label: #4a5b69;
+$twp-cx-line: #e1e6ea;
+$twp-cx-shade: #f1f4f6;
+
+.twp_cx_header {
+    table.twp_cx_head {
+        width: 100%;
+        border-collapse: collapse;
+
+        td {
+            padding: 0;
+            border: 0;
+            vertical-align: middle;
+        }
+    }
+
+    td.twp_cx_mark {
+        width: 1%;
+        padding-right: .6rem;
+        white-space: nowrap;
+    }
+
+    .twp_cx_icon {
+        height: 46px;
+    }
+
+    .twp_cx_logo {
+        max-height: 54px;
+        max-width: 220px;
+    }
+
+    .twp_cx_name {
+        font-size: 1.3rem;
+        font-weight: bold;
+        line-height: 1.2;
+    }
+
+    .twp_cx_contact {
+        font-size: .85rem;
+        color: $twp-cx-muted;
+    }
+
+    td.twp_cx_doc {
+        text-align: right;
+        vertical-align: bottom;
+        white-space: nowrap;
+    }
+
+    .twp_cx_doc_title {
+        font-size: .7rem;
+        font-weight: bold;
+        letter-spacing: .15em;
+        text-transform: uppercase;
+        color: $twp-cx-label;
+    }
+
+    .twp_cx_doc_number {
+        font-size: 1.7rem;
+        font-weight: bold;
+        line-height: 1.1;
+    }
+
+    .twp_cx_rule {
+        height: 3px;
+        margin-top: .5rem;
+    }
+}
+
+.twp_compact {
+    .twp_cx_label {
+        padding-bottom: .15rem;
+        font-size: .7rem;
+        font-weight: bold;
+        letter-spacing: .06em;
+        text-transform: uppercase;
+        color: $twp-cx-label;
+    }
+
+    table.twp_cx_info {
+        width: 100%;
+        margin-bottom: 1rem;
+        border-collapse: collapse;
+
+        td {
+            padding: 0 1rem 0 0;
+            border: 0;
+            vertical-align: top;
+        }
+
+        td.twp_cx_info_customer {
+            width: 34%;
+        }
+
+        td.twp_cx_info_document {
+            width: 30%;
+        }
+    }
+
+    .twp_cx_info_more {
+        margin-top: .5rem;
+    }
+
+    table.o_main_table {
+        thead th {
+            border-top: 0;
+            border-bottom: 2px solid;
+            font-size: .7rem;
+            letter-spacing: .05em;
+            text-transform: uppercase;
+        }
+
+        tbody tr > td {
+            border-top: 0;
+            border-bottom: 1px solid $twp-cx-line;
+            background-color: transparent;
+        }
+
+        // An option is told apart by its tag and its note; the shading is the alternating one.
+        tbody tr.twp_opt > td {
+            background-color: transparent;
+            border-left: 0;
+        }
+
+        tbody tr.twp_opt_head > td {
+            border-top: 0;
+        }
+
+        // A bundle's members read as one block under it.
+        tbody tr.twp_cx_member > td {
+            padding-top: .05rem;
+            padding-bottom: .05rem;
+            border-bottom: 0;
+            font-size: .85rem;
+        }
+
+        tbody tr.twp_cx_z > td {
+            background-color: $twp-cx-shade;
+        }
+
+        tbody tr.twp_set_head > td,
+        tbody tr.twp_or > td {
+            border-bottom: 0;
+        }
+    }
+}
+
+.twp_cx_footer {
+    table.twp_cx_foot {
+        width: 100%;
+        border-collapse: collapse;
+
+        td {
+            padding: .4rem 0 0;
+            border: 0;
+            border-top: 1px solid;
+            font-size: .8rem;
+            vertical-align: top;
+        }
+
+        p {
+            margin: 0;
+        }
+    }
+
+    td.twp_cx_foot_side {
+        width: 1%;
+        padding-left: 1rem;
+        text-align: right;
+        white-space: nowrap;
+    }
+
+    .twp_cx_tagline {
+        font-weight: bold;
+    }
+
+    .twp_cx_page {
+        color: $twp-cx-muted;
+    }
+}

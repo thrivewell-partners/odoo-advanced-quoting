@@ -1,7 +1,7 @@
 {
     "name": "Advanced Quoting",
     "summary": "Bundles, alternatives kept out of the total, and quote styles set by the customer's tag",
-    "version": "19.0.0.9.0",
+    "version": "19.0.0.10.0",
     "category": "Sales/Sales",
     "license": "LGPL-3",
     "author": "ThriveWell Partners",
@@ -22,6 +22,7 @@
         "views/sale_portal_templates.xml",
         "views/account_move_views.xml",
         "report/sale_report_templates.xml",
+        "report/compact_layout.xml",
         "report/company_report_styles.xml",
         "report/invoice_report_templates.xml",
     ],
@@ -33,6 +34,7 @@
         ],
         "web.report_assets_common": [
             "twp_advanced_quoting/static/src/documents/option_blocks.scss",
+            "twp_advanced_quoting/static/src/documents/compact_layout.scss",
         ],
         "web.assets_frontend": [
             "twp_advanced_quoting/static/src/documents/option_blocks.scss",

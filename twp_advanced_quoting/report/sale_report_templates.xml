@@ -42,6 +42,67 @@
     </template>
 
     <template id="report_saleorder_document" inherit_id="sale.report_saleorder_document">
+        <!-- The compact layout, when the quote and order report asks for it -->
+        <xpath expr="//t[@t-call='web.external_layout']" position="attributes">
+            <attribute name="t-call">{{ 'twp_advanced_quoting.external_layout_compact' if twp_compact else 'web.external_layout' }}</attribute>
+        </xpath>
+
+        <!-- In the compact layout the customer, the quote and the job sit side by side, in place
+             of the address block and the row of dates. The introduction follows, then the lines. -->
+        <xpath expr="//div[@id='informations']" position="before">
+            <table t-if="twp_compact" class="twp_cx_info" name="twp_cx_info">
+                <tr>
+                    <td class="twp_cx_info_customer" name="twp_cx_customer">
+                        <div class="twp_cx_label">
+                            <t t-if="doc.state in ('draft', 'sent')">Quote for</t>
+                            <t t-else="">Order for</t>
+                        </div>
+                        <t t-out="address"/>
+                        <div t-if="information_block" class="twp_cx_info_more" t-out="information_block"/>
+                    </td>
+                    <td class="twp_cx_info_document" name="twp_cx_document">
+                        <div class="twp_cx_label">
+                            <t t-if="doc.state in ('draft', 'sent')">Quote</t>
+                            <t t-else="">Order</t>
+                        </div>
+                        <div t-if="doc.twp_quote_number and doc.twp_quote_number != doc.name">Quote number <span t-field="doc.twp_quote_number">REDQ0001</span></div>
+                        <div t-if="doc.client_order_ref">Your reference <span t-field="doc.client_order_ref">PO 1234</span></div>
+                        <div t-if="doc.date_order">Date <span t-field="doc.date_order" t-options="{'widget': 'date'}">2023-12-31</span></div>
+                        <div t-if="doc.validity_date and doc.state in ('draft', 'sent')">Expires <span t-field="doc.validity_date">2023-12-31</span></div>
+                        <div t-if="doc.commitment_date">Delivery <span t-field="doc.commitment_date" t-options="{'widget': 'date'}">2023-12-31</span></div>
+                        <div t-if="doc.user_id.name">Salesperson <span t-field="doc.user_id">Mitchell Admin</span></div>
+                    </td>
+                    <td class="twp_cx_info_job" name="twp_cx_job">
+                        <t t-set="twp_cx_fields" t-value="doc._twp_header_fields()"/>
+                        <t t-if="twp_cx_fields">
+                            <div class="twp_cx_label">Job</div>
+                            <div t-foreach="twp_cx_fields" t-as="twp_field" t-att-name="twp_field['name']">
+                                <t t-out="twp_field['label']">Freight</t> <t t-out="twp_field['value']">Prepaid and Add</t>
+                            </div>
+                        </t>
+                    </td>
+                </tr>
+            </table>
+        </xpath>
+        <xpath expr="//div[@id='informations']" position="attributes">
+            <attribute name="t-if">not twp_compact</attribute>
+        </xpath>
+
+        <!-- In the compact layout every other item is shaded: a product row, or a bundle with its
+             members and notes as one block. A plain section starts the count again. -->
+        <xpath expr="//t[@t-set='is_combo']" position="after">
+            <t t-if="twp_compact">
+                <t t-if="(is_section or is_subsection) and not line.twp_is_bundle">
+                    <t t-set="twp_zebra_count" t-value="0"/>
+                    <t t-set="twp_zebra" t-value="False"/>
+                </t>
+                <t t-elif="line.twp_is_bundle or not (is_note or is_section or is_subsection or line.twp_in_bundle)">
+                    <t t-set="twp_zebra_count" t-value="(twp_zebra_count or 0) + 1"/>
+                    <t t-set="twp_zebra" t-value="twp_zebra_count % 2 == 0"/>
+                </t>
+                <t t-set="twp_cx_member" t-value="line.twp_in_bundle and not line.display_type"/>
+            </t>
+        </xpath>
         <xpath expr="//t[@t-set='layout_document_title']/span[2]" position="before">
             <!-- The style's title, Estimate on a budget estimate, or the style's order title once confirmed -->
             <span t-elif="doc._twp_title()">
@@ -58,7 +119,7 @@
         </xpath>
         <xpath expr="//div[@id='informations']" position="after">
             <t t-set="twp_header_fields" t-value="doc._twp_header_fields()"/>
-            <div t-if="twp_header_fields" class="row mb-4" id="twp_informations">
+            <div t-if="twp_header_fields and not twp_compact" class="row mb-4" id="twp_informations">
                 <div t-foreach="twp_header_fields" t-as="twp_field" class="col" t-att-name="twp_field['name']">
                     <strong t-out="twp_field['label']">Job Name</strong>
                     <div t-out="twp_field['value']">Main Street School</div>
@@ -138,10 +199,11 @@
             </td>
         </xpath>
         <xpath expr="//tr[@name='tr_product']/td[@name='td_product_name']/span" position="attributes">
-            <attribute name="t-if">not twp_show_code</attribute>
+            <attribute name="t-if">not twp_show_code and not twp_cx_member</attribute>
         </xpath>
         <xpath expr="//tr[@name='tr_product']/td[@name='td_product_name']/span" position="after">
-            <span t-if="twp_show_code" t-out="line._twp_name_without_code()" t-options="{'widget': 'text'}">Bacon Burger</span>
+            <span t-if="twp_show_code and not twp_cx_member" t-out="line._twp_name_without_code()" t-options="{'widget': 'text'}">Bacon Burger</span>
+            <span t-if="twp_cx_member" t-out="line._twp_compact_name(twp_show_code)">Bacon Burger</span>
         </xpath>
         <xpath expr="//tr[@name='tr_product']/td[@name='td_product_name']" position="after">
             <td t-if="twp_show_code" name="twp_td_code" class="text-nowrap">
@@ -171,18 +233,18 @@
             <t t-call="twp_advanced_quoting.option_lead"/>
         </xpath>
         <xpath expr="//tr[@name='tr_section']" position="attributes">
-            <attribute name="t-att-class">('fw-bolder o_line_section ' if is_section else 'fw-bold o_line_subsection ') + line._twp_option_row_class()</attribute>
+            <attribute name="t-att-class">('fw-bolder o_line_section ' if is_section else 'fw-bold o_line_subsection ') + line._twp_option_row_class() + (' twp_cx_z' if twp_zebra else '')</attribute>
         </xpath>
         <xpath expr="//tr[@name='tr_product']" position="attributes">
-            <attribute name="t-att-class">line._twp_option_row_class()</attribute>
+            <attribute name="t-att-class">line._twp_option_row_class() + (' twp_cx_z' if twp_zebra else '') + (' twp_cx_member' if twp_cx_member else '')</attribute>
         </xpath>
         <xpath expr="//tr[@name='tr_note']" position="attributes">
             <attribute name="class"/>
-            <attribute name="t-attf-class">fst-italic o_line_note {{ line._twp_option_row_class() }}</attribute>
+            <attribute name="t-attf-class">fst-italic o_line_note {{ line._twp_option_row_class() }}{{ ' twp_cx_z' if twp_zebra else '' }}</attribute>
         </xpath>
         <xpath expr="//tr[@name='tr_section_group']" position="attributes">
             <attribute name="class"/>
-            <attribute name="t-attf-class">o_line_section {{ line._twp_option_row_class() }}</attribute>
+            <attribute name="t-attf-class">o_line_section {{ line._twp_option_row_class() }}{{ ' twp_cx_z' if twp_zebra else '' }}</attribute>
         </xpath>
         <xpath expr="//tr[@name='tr_section']/td[@name='td_section_name']/span" position="before">
             <t t-call="twp_advanced_quoting.option_badge"/>
@@ -202,7 +264,7 @@
         <xpath expr="//tr[@name='tr_section']" position="before">
             <t t-if="line.twp_standalone" name="twp_standalone"/>
             <tr t-elif="(is_section or is_subsection) and line.twp_is_bundle" name="twp_tr_bundle"
-                t-att-class="('fw-bolder o_line_section ' if is_section else 'fw-bold o_line_subsection ') + line._twp_option_row_class()">
+                t-att-class="('fw-bolder o_line_section ' if is_section else 'fw-bold o_line_subsection ') + line._twp_option_row_class() + (' twp_cx_z' if twp_zebra else '')">
                 <t t-set="twp_bundle_row" t-value="line._twp_bundle_row(price_field)"/>
                 <td t-if="twp_show_numbers" name="twp_td_line_number" class="text-end">
                     <span t-out="twp_numbers.get(line.id, '')">1</span>
@@ -213,7 +275,8 @@
                 </td>
                 <td t-if="twp_show_code" name="twp_td_code"/>
                 <td name="twp_td_bundle_quantity" class="text-end">
-                    <span class="text-nowrap twp_bundle_qty" t-out="twp_bundle_row['qty']" t-options="{'widget': 'float', 'decimal_precision': 'Product Unit'}">5.00</span>
+                    <span t-if="not twp_compact" class="text-nowrap twp_bundle_qty" t-out="twp_bundle_row['qty']" t-options="{'widget': 'float', 'decimal_precision': 'Product Unit'}">5.00</span>
+                    <span t-else="" class="text-nowrap twp_bundle_qty" t-out="line._twp_compact_qty(twp_bundle_row['qty'])">5</span>
                 </td>
                 <td name="twp_td_bundle_priceunit" class="text-end text-nowrap">
                     <span t-if="twp_bundle_row['show_prices'] and twp_bundle_row['package_price'] is not False" class="twp_package_price" t-out="twp_bundle_row['package_price']" t-options="{'widget': 'float', 'decimal_precision': 'Product Price'}">1,260.00</span>
@@ -261,6 +324,15 @@
         </xpath>
         <xpath expr="//tr[@name='tr_product']/td[@name='td_product_quantity']/span[hasclass('text-muted', 'small')]" position="attributes">
             <attribute name="t-if" add="not twp_per_bundle" separator=" and "/>
+        </xpath>
+        <xpath expr="//tr[@name='tr_product']/td[@name='td_product_quantity']/span[@t-field='line.product_uom_qty']" position="attributes">
+            <attribute name="t-if" add="not twp_compact" separator=" and "/>
+        </xpath>
+        <xpath expr="//tr[@name='tr_product']/td[@name='td_product_quantity']/span[@t-field='line.product_uom_id']" position="attributes">
+            <attribute name="t-if" add="not twp_compact" separator=" and "/>
+        </xpath>
+        <xpath expr="//tr[@name='tr_product']/td[@name='td_product_quantity']/span[@t-field='line.product_uom_qty']" position="before">
+            <span t-if="twp_compact and not twp_per_bundle" class="text-nowrap twp_cx_qty" t-out="line._twp_compact_qty()">1</span>
         </xpath>
 
         <!-- No total when the style hides it, or the quote is nothing but options (D2). -->

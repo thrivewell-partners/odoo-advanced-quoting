@@ -1,7 +1,7 @@
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError, ValidationError
 from odoo.tools import float_compare, float_repr, float_round
-from odoo.tools.misc import unique
+from odoo.tools.misc import formatLang, unique
 
 OPTION_MODES = [
     ("included", "Included"),
@@ -524,6 +524,26 @@ class SaleOrderLine(models.Model):
         if code and name.startswith(prefix):
             return name[len(prefix):].lstrip()
         return name
+
+    def _twp_compact_name(self, without_code):
+        """A bundle member's description on a compact quote: its first line, the product's name."""
+        self.ensure_one()
+        name = self._twp_name_without_code() if without_code else (self.name or "")
+        return name.split("\n", 1)[0]
+
+    def _twp_compact_qty(self, qty=None):
+        """A quantity on a compact quote: "1", "2.5", or "12 ft" when the unit is not Units."""
+        self.ensure_one()
+        qty = self.product_uom_qty if qty is None else qty
+        digits = self.env["decimal.precision"].precision_get("Product Unit")
+        text = formatLang(self.env, qty, digits=digits)
+        decimal_point = getattr(self.env["res.lang"]._get_data(code=self.env.lang or "en_US"), "decimal_point", ".")
+        if decimal_point and decimal_point in text:
+            text = text.rstrip("0").rstrip(decimal_point)
+        units = self.env.ref("uom.product_uom_unit", raise_if_not_found=False)
+        if self.product_uom_id and self.product_uom_id != units:
+            text = f"{text} {self.product_uom_id.name}"
+        return text
 
     def _twp_bundle_row(self, price_field):
         """What a bundle's own row prints: packages, the price of one, and the bundle's amount.

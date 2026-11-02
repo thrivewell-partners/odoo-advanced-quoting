@@ -248,6 +248,13 @@ class SaleOrder(models.Model):
             return self.twp_document_style_id.title_word
         return self.twp_document_style_id.order_title_word
 
+    def _twp_compact_title(self):
+        """The word over the number at the top of a compact quote or order."""
+        self.ensure_one()
+        if self._twp_title():
+            return self._twp_title()
+        return _("Quotation") if self.state in ("draft", "sent") else _("Order")
+
     @api.depends("twp_document_style_id", "twp_is_estimate")
     def _compute_type_name(self):
         super()._compute_type_name()
