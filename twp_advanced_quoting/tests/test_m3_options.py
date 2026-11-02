@@ -231,10 +231,13 @@ class TestOptionDocuments(OptionCase, TransactionCase):
         order = self.make_order()
         rows = {row["name"]: row["amount"] for row in order._twp_option_totals()}
         self.assertEqual(rows, {"Option 1": 7150.0, "Option 2": 7260.0, "HVLS fan": 7480.0})
-        # With Option 1 chosen, Option 2 takes its place.
+        # With Option 1 chosen, its set is settled (M9): Option 2 prints no row, the fan keeps its own.
         self.section(order, "Option 1").twp_option_chosen = True
         rows = {row["name"]: row["amount"] for row in order._twp_option_totals()}
-        self.assertEqual(rows, {"Option 2": 7260.0, "HVLS fan": 7700.0})
+        self.assertEqual(rows, {"HVLS fan": 7700.0})
+        # With the fan added too, nothing is left open and the block prints nothing.
+        self.section(order, "HVLS fan").twp_option_chosen = True
+        self.assertEqual(order._twp_option_totals(), [])
 
     def test_quote_prints_options_in_full(self):
         order = self.make_order()

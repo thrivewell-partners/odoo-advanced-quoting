@@ -544,9 +544,10 @@ class SaleOrder(models.Model):
         )["total_amount_currency"]
 
     def _twp_option_totals(self):
-        """[{name, amount}]: the order's total with each option not chosen, for the totals block.
+        """[{name, amount}]: the order's total with each option still open, for the totals block.
 
-        An alternative takes the place of the one chosen in its set, if any.
+        Once a set of alternatives has its choice, the others in it are settled and print no row;
+        add-ons not yet added keep theirs, since each is a choice of its own.
         """
         self.ensure_one()
         if self.state not in ("draft", "sent"):
@@ -556,11 +557,10 @@ class SaleOrder(models.Model):
         included = lines.filtered(lambda line: not line._twp_is_excluded())
         rows = []
         for section in options.filtered(lambda s: not s.twp_option_chosen):
+            if section.twp_option_mode == "alternative" and section._twp_alternatives().filtered("twp_option_chosen"):
+                continue
             members = section._twp_section_members().filtered(lambda line: not line.display_type)
             with_option = included
-            if section.twp_option_mode == "alternative":
-                for chosen in section._twp_alternatives().filtered("twp_option_chosen"):
-                    with_option -= chosen._twp_section_members()
             # A line inside another option not chosen stays out.
             with_option |= members.filtered(lambda line: all(
                 other == section or other.twp_option_mode == "included" or other.twp_option_chosen

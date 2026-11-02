@@ -259,6 +259,30 @@ class TestOnlineChoice(ChoiceCase, HttpCase):
         self.assertEqual(self.line(self.order, self.option_two).product_uom_qty, 0.0)
         self.assertEqual(self.order.amount_untaxed, 6500.0)
 
+    def test_choosing_settles_the_totals_block(self):
+        page = self.portal()
+        for name in ("Total with Option 1", "Total with Option 2", "Total with HVLS fan"):
+            self.assertIn(name, page)
+        self.choose(self.section(self.order, "Option 2"))
+        page = self.portal()
+        self.assertNotIn("Total with Option 1", page)
+        self.assertNotIn("Total with Option 2", page)
+        self.assertIn("Total with HVLS fan", page)
+        pdf = self.env["ir.actions.report"]._render_qweb_html("sale.action_report_saleorder", self.order.ids)[0]
+        self.assertNotIn(b"Total with Option 1", pdf)
+        self.assertIn(b"Total with HVLS fan", pdf)
+        self.choose(self.section(self.order, "HVLS fan"))
+        page = self.portal()
+        self.assertNotIn("Total with", page)
+        self.assertNotIn("twp_option_totals", page)
+
+    def test_each_set_settles_on_its_own(self):
+        option_one, option_two = self.section(self.order, "Option 1"), self.section(self.order, "Option 2")
+        option_two.twp_option_group = "Controls"
+        self.choose(option_one)
+        rows = [row["name"] for row in self.order._twp_option_totals()]
+        self.assertEqual(rows, ["Option 2", "HVLS fan"], "Option 2 is a set of its own, still open")
+
     def test_pdf_has_no_controls(self):
         html = self.env["ir.actions.report"]._render_qweb_html("sale.action_report_saleorder", self.order.ids)[0]
         self.assertNotIn(b"twp_option_choose", html)
