@@ -92,6 +92,7 @@ class TestRecordedChoice(ChoiceCase, TransactionCase):
         self.assertFalse(option_one.twp_customer_chose)
         with self.assertRaises(UserError):
             order.action_quotation_send()
+        self.assertNotIn("Recorded for the customer", self.note_bodies(order), "An import records nobody's choice")
 
     def test_phone_order_confirms_without_the_portal(self):
         order = self.make_order()

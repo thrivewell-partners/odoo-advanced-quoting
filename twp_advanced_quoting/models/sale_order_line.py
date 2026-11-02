@@ -468,7 +468,7 @@ class SaleOrderLine(models.Model):
         if not self.env.context.get("twp_option_sync"):
             self._twp_check_options_editable(vals)
             vals = self._twp_choice_vals(vals)
-            if "twp_option_chosen" in vals:
+            if "twp_option_chosen" in vals and not self.env.context.get("import_file"):
                 changed = self.filtered(lambda line: line.twp_option_chosen != bool(vals["twp_option_chosen"]))
         result = super().write(vals)
         changed._twp_post_choice_notes()
