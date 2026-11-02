@@ -163,6 +163,15 @@ class TestBids(TransactionCase):
         self.assertEqual((copy.opportunity_id, copy.partner_id, copy.twp_job_name), (self.opportunity, self.bidder_b, self.opportunity.name))
         self.assertEqual(self.opportunity.action_twp_duplicate_bid()["context"]["default_bid_id"], copy.id, "Then its latest bid")
 
+    def test_duplicate_bid_lists_bids_with_their_customer(self):
+        bid = self._bid()
+        arch = self.env["twp.bid.copy"].get_view(self.env.ref("twp_bids.twp_bid_copy_view_form").id, "form")["arch"]
+        self.assertIn("sale_show_partner_name", arch)
+        Order = self.env["sale.order"].with_context(sale_show_partner_name=True)
+        self.assertEqual(Order.browse(bid.id).display_name, f"{bid.name} - {self.bidder_a.name}")
+        found = Order.name_search(self.bidder_a.name, [("twp_is_bid", "=", True)])
+        self.assertIn(bid.id, [id_ for id_, _name in found], "Found by the customer's name")
+
     def test_duplicate_onto_another_project(self):
         bid = self._bid()
         other = self.env["crm.lead"].create({
