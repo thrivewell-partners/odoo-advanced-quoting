@@ -144,9 +144,9 @@ class TestBids(TransactionCase):
         })
         wizard = Form(self.env["twp.bid.copy"].with_context(default_bid_id=bid.id))
         self.assertEqual(wizard.opportunity_id, self.opportunity, "The bid's own project by default")
-        self.assertEqual(wizard.already_bid_ids, self.bidder_a)
+        self.assertEqual(wizard.already_bid_ids.ids, self.bidder_a.ids)
         wizard.opportunity_id = other
-        self.assertFalse(wizard.already_bid_ids)
+        self.assertFalse(wizard.already_bid_ids.ids)
         copy = self._duplicate(bid, self.bidder_b, opportunity=other)
         self.assertEqual((copy.opportunity_id, copy.twp_job_name), (other, other.name))
         self.assertEqual(copy.twp_bid_source_id, bid)
