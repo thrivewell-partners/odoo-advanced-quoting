@@ -80,6 +80,7 @@ class TestCompactLayout(DocumentCase, TransactionCase):
         order = self.make_order(bundle_only=True)
         # A line above the bundle is the first item, so the bundle is the second, shaded.
         order.write({"order_line": [Command.create({"product_id": self.fan.id, "product_uom_qty": 1, "sequence": 5})]})
+        order.invalidate_recordset(["order_line"])  # read the lines back in sequence order
         page = self.render_quote(order)
         tree = self.tree(page)
         fan = [row for row in self.product_rows(page) if "TWP Fan" in row.text_content()][0]
