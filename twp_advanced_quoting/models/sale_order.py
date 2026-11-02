@@ -503,6 +503,8 @@ class SaleOrder(models.Model):
             return False
         if section.twp_option_chosen == bool(chosen):
             return True
+        # Odoo logs the change in the total too; it is the customer's, not the public user's.
+        self._track_set_author(partner)
         section.with_context(twp_portal_partner_id=partner.id).write({"twp_option_chosen": bool(chosen)})
         return True
 
