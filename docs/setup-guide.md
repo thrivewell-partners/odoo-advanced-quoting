@@ -106,6 +106,9 @@ Bring your price books as a spreadsheet and we load them, with each product's ca
   **Add** or **Remove**, until they accept. Each choice is a note in the quote's chatter in the
   customer's name, and the total follows. Accept & Sign appears once every set of alternatives has
   a pick. Bids are never chosen online.
+- **"Total with" rows settle as choices are made.** Once a set of alternatives has its choice, the
+  rows for the others in it drop off the quote, online and on the PDF. An add-on keeps its row
+  until it is added, since each add-on is a choice of its own.
 - **When the customer tells you instead** (phone, email, in person), **Mark Chosen** records it
   for them, and the chatter says who recorded it. Then confirm, or send the quote back to sign; the
   customer can still change it online until they accept.
