@@ -8,7 +8,10 @@ class TwpBidCopy(models.TransientModel):
     _name = "twp.bid.copy"
     _description = "Duplicate a bid for contractors"
 
-    bid_id = fields.Many2one("sale.order", string="Bid", required=True, readonly=True)
+    bid_id = fields.Many2one(
+        "sale.order", string="Bid", required=True, domain=[("twp_is_bid", "=", True)],
+        help="The bid to copy. From a project it can be a bid on any project.",
+    )
     partner_ids = fields.Many2many("res.partner", string="Contractors", required=True)
     opportunity_id = fields.Many2one(
         "crm.lead", string="Project", compute="_compute_opportunity_id", store=True, readonly=False,
@@ -23,6 +26,9 @@ class TwpBidCopy(models.TransientModel):
 
     @api.depends("bid_id")
     def _compute_opportunity_id(self):
+        # Opened from a project, the copies go on that project whichever bid is picked.
+        if self.env.context.get("twp_bid_copy_project"):
+            return
         for wizard in self:
             wizard.opportunity_id = wizard.bid_id.opportunity_id
 
