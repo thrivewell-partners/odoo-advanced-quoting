@@ -148,3 +148,19 @@ class TestBids(TransactionCase):
         bid = form.save()
         self.assertTrue(bid.twp_is_bid)
         self.assertEqual((bid.opportunity_id, bid.twp_job_name), (self.opportunity, self.opportunity.name))
+
+    def test_bid_options_are_not_chosen_online(self):
+        self.env.company.twp_portal_choice = True
+        bid = self._bid()
+        bid.write({"order_line": [
+            Command.create({
+                "display_type": "line_section", "name": "Option 1",
+                "twp_option_mode": "alternative", "sequence": 50,
+            }),
+            Command.create({"product_id": self.heater.id, "product_uom_qty": 1, "sequence": 51}),
+        ]})
+        option = bid.order_line.filtered(lambda line: line.name == "Option 1")
+        self.assertFalse(bid._twp_customer_can_choose())
+        option.with_context(import_file=True).twp_option_chosen = True
+        self.assertFalse(bid._twp_unrecorded_choices(), "A bid goes out as the bidder prices it")
+

@@ -109,6 +109,10 @@
                              help="Alternatives and add-ons stay out of the total until chosen. Confirming a quote that has them asks which the customer chose; the rest drop to quantity 0 and stay on the order as a record.">
                         <field name="twp_ask_options_on_confirm"/>
                     </setting>
+                    <setting id="twp_portal_choice" company_dependent="1"
+                             help="On the online quote, the customer picks one alternative in each set and adds or removes add-ons, until they accept. Each choice is noted in the quote's chatter. Salespeople can still record the choice for them.">
+                        <field name="twp_portal_choice"/>
+                    </setting>
                     <setting id="twp_document_styles" company_dependent="1" string="Document Styles"
                              help="A quote takes the style its customer's tags give it: itemized or grouped, its title, totals and columns. Customers with none of the styles' tags get the default.">
                         <div class="content-group mt16">

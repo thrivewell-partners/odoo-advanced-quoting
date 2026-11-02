@@ -21,9 +21,15 @@
             <section t-if="sale_order._twp_show_introduction()" id="twp_introduction" class="mb-4">
                 <div t-field="sale_order.twp_introduction"/>
             </section>
+            <t t-set="twp_customer_can_choose" t-value="sale_order._twp_customer_can_choose()"/>
             <div t-if="sale_order._twp_needs_choice()" id="twp_needs_choice" class="alert alert-info d-print-none" role="status">
-                This quote has options to choose between. Let us know which you would like, and we will
-                send it back to you to accept.
+                <t t-if="twp_customer_can_choose">
+                    This quote has options to choose between. Choose one in each set below, then accept.
+                </t>
+                <t t-else="">
+                    This quote has options to choose between. Let us know which you would like, and we will
+                    send it back to you to accept.
+                </t>
             </div>
         </xpath>
 
@@ -126,9 +132,11 @@
         </xpath>
         <xpath expr="//tr[@name='tr_section']/td[@name='td_section_price']/span" position="after">
             <t t-call="twp_advanced_quoting.option_note"/>
+            <t t-call="twp_advanced_quoting.option_choice_control"/>
         </xpath>
         <xpath expr="//td[@name='td_section_group_total']/span" position="after">
             <t t-call="twp_advanced_quoting.option_note"/>
+            <t t-call="twp_advanced_quoting.option_choice_control"/>
         </xpath>
 
         <!-- Bundles, as on the PDF -->
@@ -158,6 +166,7 @@
                 <td name="twp_td_bundle_subtotal" class="text-end o_price_total">
                     <span t-if="twp_bundle_row['show_prices']" class="text-nowrap twp_bundle_amount" t-out="twp_bundle_row['amount']" t-options="{'widget': 'monetary', 'display_currency': sale_order.currency_id}"/>
                     <t t-call="twp_advanced_quoting.option_note"/>
+            <t t-call="twp_advanced_quoting.option_choice_control"/>
                 </td>
             </tr>
         </xpath>
@@ -189,6 +198,26 @@
         <xpath expr="//tr[@name='tr_product']/td[@name='td_product_quantity']/*[1]" position="attributes">
             <attribute name="t-if">not twp_per_bundle</attribute>
         </xpath>
+    </template>
+
+    <!-- Under an alternative's or add-on's amount online: the customer's own choice, while the
+         quote is open and the company lets customers choose. Never on the PDF. -->
+    <template id="option_choice_control">
+        <t t-if="report_type == 'html' and line._twp_is_option() and line.order_id._twp_customer_can_choose() and line in line.order_id._twp_options()">
+            <div class="twp_option_choice d-print-none mt-1 fw-normal">
+                <t t-if="line.twp_option_mode == 'alternative'">
+                    <span t-if="line.twp_option_chosen" class="twp_option_yours small">Your choice</span>
+                    <button t-else="" type="button" class="btn btn-sm btn-primary twp_option_choose"
+                            t-att-data-line-id="line.id" data-chosen="1">Choose this option</button>
+                </t>
+                <t t-else="">
+                    <button t-if="line.twp_option_chosen" type="button" class="btn btn-sm btn-link p-0 twp_option_choose"
+                            t-att-data-line-id="line.id" data-chosen="0">Remove</button>
+                    <button t-else="" type="button" class="btn btn-sm btn-outline-primary twp_option_choose"
+                            t-att-data-line-id="line.id" data-chosen="1">Add</button>
+                </t>
+            </div>
+        </t>
     </template>
 
     <!-- The line's description, apart from the rest so that it applies before any other module's

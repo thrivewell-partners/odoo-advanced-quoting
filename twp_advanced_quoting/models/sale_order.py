@@ -231,7 +231,13 @@ class SaleOrder(models.Model):
 
     def action_quotation_send(self):
         self._twp_check_style()
+        if not self.env.context.get("proforma"):
+            self._twp_check_no_prepick()
         return super().action_quotation_send()
+
+    def action_quotation_sent(self):
+        self._twp_check_no_prepick()
+        return super().action_quotation_sent()
 
     def _twp_title(self):
         """The title the style gives this quote or order, or False for Odoo's own."""
@@ -445,6 +451,60 @@ class SaleOrder(models.Model):
                 for line in products:
                     line.write({"twp_not_chosen": False, "product_uom_qty": line.twp_quoted_qty})
             (lines - products).write({"twp_not_chosen": False})
+
+    def _twp_unrecorded_choices(self):
+        """Alternatives marked chosen that nobody recorded as the customer's choice."""
+        self.ensure_one()
+        if self.state not in ("draft", "sent"):
+            return self.env["sale.order.line"]
+        return self._twp_options().filtered(
+            lambda section: section.twp_option_mode == "alternative"
+            and section.twp_option_chosen
+            and not section.twp_customer_chose
+        )
+
+    def _twp_check_no_prepick(self):
+        """A quote never goes out with an alternative picked for the customer."""
+        for order in self:
+            unrecorded = order._twp_unrecorded_choices()
+            if unrecorded:
+                raise UserError(_(
+                    "%(order)s has %(options)s marked Chosen, but nobody recorded it as the customer's "
+                    "choice, so it can't be sent that way. Mark it Not Chosen to let the customer choose, "
+                    "or mark it Chosen again if the customer told you.",
+                    order=order.name,
+                    options=", ".join((line.name or "").splitlines()[0] for line in unrecorded),
+                ))
+
+    def _twp_customer_can_choose(self):
+        """Whether the customer may choose alternatives and add-ons on the online quote."""
+        self.ensure_one()
+        return (
+            self.company_id.twp_portal_choice
+            and self.state in ("draft", "sent")
+            and bool(self._twp_options())
+        )
+
+    def _twp_choose_online(self, section, chosen, partner):
+        """The customer chose, or took back, an alternative or add-on on the online quote.
+
+        Called with sudo by the portal route, which has checked the access token; `partner` is who
+        chose, and signs the chatter note. Returns False
+        and changes nothing when the choice is not the customer's to make.
+        """
+        self.ensure_one()
+        if (
+            not self._twp_customer_can_choose()
+            or section.order_id != self
+            or not section._twp_is_option()
+            or section not in self._twp_options()
+            or (section.twp_option_mode == "alternative" and not chosen)
+        ):
+            return False
+        if section.twp_option_chosen == bool(chosen):
+            return True
+        section.with_context(twp_portal_partner_id=partner.id).write({"twp_option_chosen": bool(chosen)})
+        return True
 
     def _twp_options_only(self):
         """A quote whose every product is in an alternative or add-on not chosen (D2)."""

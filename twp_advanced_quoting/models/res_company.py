@@ -41,6 +41,12 @@ class ResCompany(models.Model):
              "Those not chosen drop to quantity 0 and stay on the order as a record.",
     )
 
+    twp_portal_choice = fields.Boolean(
+        string="Customers Choose Online",
+        help="On the online quote, the customer chooses between alternatives and adds or removes "
+             "add-ons, until the quote is accepted. Salespeople can still record the choice for them.",
+    )
+
     # Document styles
     twp_default_document_style_id = fields.Many2one(
         "twp.document.style",

@@ -1,3 +1,4 @@
+from . import controllers
 from . import models
 
 # Odoo's own file name for the quote report, put back when the module is uninstalled.

@@ -66,6 +66,13 @@ class SaleOrderLine(models.Model):
         string="Chosen",
         help="The customer took this alternative or add-on, so it counts in the order total.",
     )
+    twp_customer_chose = fields.Boolean(
+        string="Customer's Choice",
+        copy=False,
+        readonly=True,
+        help="Chosen by the customer, online or told to the salesperson, who recorded it. A pick "
+             "nobody recorded, such as one carried over by Duplicate, keeps the quote from being sent.",
+    )
     twp_option_label = fields.Char(
         string="Option",
         compute="_compute_twp_option_label",
@@ -318,7 +325,46 @@ class SaleOrderLine(models.Model):
         for line in self.filtered(lambda l: l._twp_is_option() and l.twp_option_mode == "alternative" and l.twp_option_chosen):
             others = line._twp_alternatives().filtered(lambda other: other != line and other.twp_option_chosen)
             if others:
-                others.with_context(twp_option_sync=True).twp_option_chosen = False
+                others.with_context(twp_option_sync=True).write({
+                    "twp_option_chosen": False,
+                    "twp_customer_chose": False,
+                })
+
+    def _twp_choice_vals(self, vals):
+        """Choosing an option, other than by a copy or an import, records the customer's choice."""
+        if "twp_option_chosen" in vals and "twp_customer_chose" not in vals and not self.env.context.get("import_file"):
+            vals = dict(vals, twp_customer_chose=bool(vals["twp_option_chosen"]))
+        return vals
+
+    def _twp_post_choice_notes(self):
+        """The chatter of each quote says what was chosen and by whom.
+
+        Online, the note is the customer's own. Anyone else records it for the customer, and the
+        note names them. An alternative unchosen says nothing: choosing another in its set
+        already reads as the change.
+        """
+        partner_id = self.env.context.get("twp_portal_partner_id")
+        for order in self.order_id.filtered(lambda o: o.state in ("draft", "sent")):
+            changes = []
+            for line in self.filtered(lambda l: l.order_id == order and l._twp_is_option()).sorted("sequence"):
+                name = (line.name or "").splitlines()[0] if line.name else ""
+                if line.twp_option_mode == "alternative":
+                    if line.twp_option_chosen:
+                        changes.append(_("Chose %s", name))
+                elif line.twp_option_chosen:
+                    changes.append(_("Added %s", name))
+                else:
+                    changes.append(_("Removed %s", name))
+            if not changes:
+                continue
+            body = "; ".join(changes) + "."
+            if partner_id:
+                order.sudo().message_post(body=body, author_id=partner_id, subtype_xmlid="mail.mt_note")
+            else:
+                order.message_post(
+                    body=_("Recorded for the customer by %(user)s: %(changes)s", user=self.env.user.name, changes=body),
+                    subtype_xmlid="mail.mt_note",
+                )
 
     @api.constrains("is_optional", "twp_is_bundle", "twp_option_mode")
     def _twp_check_not_optional(self):
@@ -399,9 +445,10 @@ class SaleOrderLine(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
-        vals_list = [self._twp_bundle_vals(vals) for vals in vals_list]
+        vals_list = [self._twp_choice_vals(self._twp_bundle_vals(vals)) for vals in vals_list]
         lines = super().create(vals_list)
         lines._twp_keep_one_alternative_chosen()
+        lines.filtered("twp_customer_chose")._twp_post_choice_notes()
         if not self.env.context.get("twp_bundle_sync"):
             # A price given with the line survives its first bundle quantity. Odoo counts it as
             # not typed by hand, so the quantity change would otherwise reprice it from the product.
@@ -417,9 +464,14 @@ class SaleOrderLine(models.Model):
         if vals.get("twp_option_mode") == "included" and "twp_option_group" not in vals:
             # An option unset is a plain section again, and joins no set of alternatives.
             vals = dict(vals, twp_option_group=False)
+        changed = self.browse()
         if not self.env.context.get("twp_option_sync"):
             self._twp_check_options_editable(vals)
+            vals = self._twp_choice_vals(vals)
+            if "twp_option_chosen" in vals:
+                changed = self.filtered(lambda line: line.twp_option_chosen != bool(vals["twp_option_chosen"]))
         result = super().write(vals)
+        changed._twp_post_choice_notes()
         if not self.env.context.get("twp_option_sync") and (
             vals.get("twp_option_chosen") or vals.get("twp_option_mode") == "alternative" or "twp_option_group" in vals
         ):
@@ -447,6 +499,8 @@ class SaleOrderLine(models.Model):
         for line, vals in zip(self, vals_list):
             if line.twp_not_chosen and not line.display_type and "product_uom_qty" not in (default or {}):
                 vals["product_uom_qty"] = line.twp_quoted_qty
+            # A pick carried over is nobody's choice yet: the copy can't be sent until it is made.
+            vals["twp_customer_chose"] = False
         return vals_list
 
     # ------------------------------------------------------------

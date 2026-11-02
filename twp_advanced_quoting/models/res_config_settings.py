@@ -26,6 +26,7 @@ class ResConfigSettings(models.TransientModel):
 
     # Alternatives and add-ons
     twp_ask_options_on_confirm = fields.Boolean(related="company_id.twp_ask_options_on_confirm", readonly=False)
+    twp_portal_choice = fields.Boolean(related="company_id.twp_portal_choice", readonly=False)
 
     # Document styles
     twp_default_document_style_id = fields.Many2one(

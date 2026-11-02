@@ -93,6 +93,16 @@ class SaleOrder(models.Model):
     def _has_to_be_paid(self):
         return super()._has_to_be_paid() and not self.twp_is_bid
 
+    def _twp_customer_can_choose(self):
+        # A bidder prices the job; the choice is the customer's once the bid is won.
+        return super()._twp_customer_can_choose() and not self.twp_is_bid
+
+    def _twp_unrecorded_choices(self):
+        # A bid goes out as the bidder prices it, picks and all.
+        if self.twp_is_bid:
+            return self.env["sale.order.line"]
+        return super()._twp_unrecorded_choices()
+
     # ------------------------------------------------------------
     # Won and lost
     # ------------------------------------------------------------
