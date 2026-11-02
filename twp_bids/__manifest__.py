@@ -7,12 +7,12 @@ built, printed and emailed like any quote, with everything Advanced Quoting adds
 own number series (set in Settings beside quote and order numbers), lives under Sales > Bids, and
 never shows in Quotations or on an opportunity's Quotations button.
 
-Copy to Customers sends one bid to several bidders, each with its own number. Won turns the bid into
-an ordinary quotation with the next quote number, and marks the other open bids on the same
-opportunity lost; from there it follows the normal Sales process. A bid can't be confirmed or
-accepted online until it is won.
+Duplicate for Contractor copies one bid to several bidders, each with its own number, on the same
+opportunity or another one. Won turns the bid into an ordinary quotation with the next quote number,
+and marks the other open bids on the same opportunity lost; from there it follows the normal Sales
+process. A bid can't be confirmed or accepted online until it is won.
 """,
-    "version": "19.0.0.2.0",
+    "version": "19.0.0.3.0",
     "category": "Sales/Sales",
     "license": "LGPL-3",
     "author": "ThriveWell Partners",

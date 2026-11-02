@@ -20,7 +20,7 @@
                 <button string="Won" name="action_twp_bid_won" type="object" class="btn-primary"
                         invisible="not twp_is_bid or twp_bid_status != 'open' or not id"
                         confirm="Make this bid a quotation? Any other open bids on the same opportunity are marked lost."/>
-                <button string="Copy to Customers" name="action_twp_copy_to_customers" type="object"
+                <button string="Duplicate for Contractor" name="action_twp_copy_to_customers" type="object"
                         invisible="not twp_is_bid or state == 'cancel' or not id"/>
                 <button string="Lost" name="action_twp_bid_lost" type="object"
                         invisible="not twp_is_bid or twp_bid_status != 'open' or not id"/>

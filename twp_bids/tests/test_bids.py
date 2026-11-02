@@ -2,7 +2,7 @@ from ast import literal_eval
 
 from odoo import Command
 from odoo.exceptions import UserError
-from odoo.tests import Form, TransactionCase, tagged
+from odoo.tests import Form, TransactionCase, new_test_user, tagged
 
 
 @tagged("post_install", "-at_install")
@@ -110,6 +110,60 @@ class TestBids(TransactionCase):
             self.assertEqual(copy.amount_untaxed, bid.amount_untaxed)
             self.assertEqual(copy.payment_term_id, bid.payment_term_id, "No terms of their own: the bid's")
         self.assertEqual(bid.twp_bid_copy_count, 2)
+        for copy in copies:
+            self.assertIn(f"Copied from {bid.name}", " ".join(copy.message_ids.mapped("body")))
+
+    def _duplicate(self, bid, partner, opportunity=None, user=None):
+        wizard = Form(self.env["twp.bid.copy"].with_user(user or self.env.user).with_context(default_bid_id=bid.id))
+        wizard.partner_ids.add(partner)
+        if opportunity:
+            wizard.opportunity_id = opportunity
+        wizard.save().action_apply()
+        return self.env["sale.order"].search([("twp_bid_source_id", "=", bid.id), ("partner_id", "=", partner.id)])
+
+    def test_duplicate_is_edited_on_its_own(self):
+        bid = self._bid()
+        first = self._duplicate(bid, self.bidder_b)
+        second = self._duplicate(bid, self.bidder_c)
+        line = first.order_line
+        first.write({"order_line": [
+            Command.update(line.id, {"price_unit": 1200.0, "product_uom_qty": 5, "name": "Changed on the copy"}),
+            Command.create({"product_id": self.heater.id, "product_uom_qty": 1, "price_unit": 10.0}),
+        ]})
+        self.assertEqual(len(first.order_line), 2)
+        for order in (bid, second):
+            self.assertEqual(len(order.order_line), 1)
+            self.assertEqual((order.order_line.price_unit, order.order_line.product_uom_qty), (950.0, 3))
+            self.assertNotEqual(order.order_line.name, "Changed on the copy")
+        self.assertFalse(first.order_line & (bid.order_line | second.order_line))
+
+    def test_duplicate_onto_another_project(self):
+        bid = self._bid()
+        other = self.env["crm.lead"].create({
+            "name": "TWP Elm Street Library", "type": "opportunity", "team_id": self.opportunity.team_id.id,
+        })
+        wizard = Form(self.env["twp.bid.copy"].with_context(default_bid_id=bid.id))
+        self.assertEqual(wizard.opportunity_id, self.opportunity, "The bid's own project by default")
+        self.assertEqual(wizard.already_bid_ids.ids, self.bidder_a.ids)
+        wizard.opportunity_id = other
+        self.assertFalse(wizard.already_bid_ids.ids)
+        copy = self._duplicate(bid, self.bidder_b, opportunity=other)
+        self.assertEqual((copy.opportunity_id, copy.twp_job_name), (other, other.name))
+        self.assertEqual(copy.twp_bid_source_id, bid)
+        bid.action_twp_bid_won()
+        self.assertEqual(copy.twp_bid_status, "open", "A bid on another project doesn't compete")
+
+    def test_duplicate_keeps_allowed_alternatives(self):
+        self.env.company.twp_allow_options_by = "managers"
+        # Sees every bid, but is no Sales administrator.
+        rep = new_test_user(self.env, login="twp_bid_rep", groups="sales_team.group_sale_salesman_all_leads")
+        bid = self._bid()
+        bid.twp_allow_options = True
+        copy = self._duplicate(bid.with_user(rep), self.bidder_b, user=rep)
+        self.assertTrue(copy.twp_allow_options, "Approved on the bid it copies")
+        self.assertFalse(bid.copy().twp_allow_options, "Duplicate on its own still asks again")
+        with self.assertRaises(UserError):
+            copy.with_user(rep).copy({"twp_allow_options": True})
 
     def test_won_bid_becomes_a_quotation_and_beats_the_others(self):
         bid_a = self._bid(self.bidder_a)

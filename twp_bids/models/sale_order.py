@@ -26,7 +26,7 @@ class SaleOrder(models.Model):
     )
     twp_bid_source_id = fields.Many2one(
         "sale.order", string="Copied From", copy=False, readonly=True, index="btree_not_null",
-        help="The bid this one was copied from by Copy to Customers.",
+        help="The bid this one was copied from by Duplicate for Contractor.",
     )
     twp_bid_copy_count = fields.Integer(compute="_compute_twp_bid_copy_count")
 
@@ -162,9 +162,10 @@ class SaleOrder(models.Model):
         reopened.filtered(lambda order: order.state == "draft").write({"twp_bid_status": "open"})
         return result
 
-    def _twp_copy_for(self, partner):
+    def _twp_copy_for(self, partner, opportunity=None):
         """This bid for another bidder: the same lines and prices, the bidder's own addresses,
-        payment terms and document style."""
+        payment terms and document style. On another opportunity it is a bid for that job, and
+        does not compete with this one."""
         self.ensure_one()
         order = self.with_company(self.company_id)
         addresses = partner.address_get(["invoice", "delivery"])
@@ -172,26 +173,33 @@ class SaleOrder(models.Model):
         fiscal_position = self.env["account.fiscal.position"].with_company(order.company_id)._get_fiscal_position(
             partner, self.env["res.partner"].browse(addresses["delivery"])
         )
-        copy = order.copy({
+        default = {
             "partner_id": partner.id,
             "partner_invoice_id": addresses["invoice"],
             "partner_shipping_id": addresses["delivery"],
             "payment_term_id": (partner.property_payment_term_id or order.payment_term_id).id,
             "fiscal_position_id": fiscal_position.id,
             "twp_bid_source_id": (self.twp_bid_source_id or self).id,
-        })
+        }
+        if opportunity and opportunity != self.opportunity_id:
+            default.update(opportunity_id=opportunity.id, twp_job_name=opportunity.name)
+        copy = order.copy(default)
         if copy.fiscal_position_id != self.fiscal_position_id:
             copy._recompute_taxes()
         style = copy._twp_matched_style()
         if style and style != copy.twp_document_style_id:
             copy.twp_document_style_id = style
+        if self.twp_allow_options:
+            # Allowed on the bid it copies, so its alternatives and add-ons are already approved.
+            copy.sudo().twp_allow_options = True
+        copy.message_post(body=_("Copied from %s.", self.name))
         return copy
 
     def action_twp_copy_to_customers(self):
         self.ensure_one()
         return {
             "type": "ir.actions.act_window",
-            "name": _("Copy to Customers"),
+            "name": _("Duplicate for Contractor"),
             "res_model": "twp.bid.copy",
             "view_mode": "form",
             "target": "new",

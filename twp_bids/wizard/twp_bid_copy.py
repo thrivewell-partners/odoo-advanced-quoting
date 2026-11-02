@@ -6,19 +6,37 @@ class TwpBidCopy(models.TransientModel):
     """One bid copied to several bidders, each copy with its own number and the bid's prices."""
 
     _name = "twp.bid.copy"
-    _description = "Copy a bid to customers"
+    _description = "Duplicate a bid for contractors"
 
     bid_id = fields.Many2one("sale.order", string="Bid", required=True, readonly=True)
-    partner_ids = fields.Many2many("res.partner", string="Customers", required=True)
+    partner_ids = fields.Many2many("res.partner", string="Contractors", required=True)
+    opportunity_id = fields.Many2one(
+        "crm.lead", string="Project", compute="_compute_opportunity_id", store=True, readonly=False,
+        domain=[("type", "=", "opportunity")],
+        help="The opportunity the copies are bids on. Another one makes them bids for that job, "
+             "which don't compete with this bid.",
+    )
     already_bid_ids = fields.Many2many(
         "res.partner", string="Already Bid To", compute="_compute_already_bid_ids",
-        help="Customers with an open bid on the same opportunity.",
+        help="Contractors with an open bid on the project.",
     )
 
     @api.depends("bid_id")
+    def _compute_opportunity_id(self):
+        for wizard in self:
+            wizard.opportunity_id = wizard.bid_id.opportunity_id
+
+    @api.depends("bid_id", "opportunity_id")
     def _compute_already_bid_ids(self):
         for wizard in self:
-            bids = wizard.bid_id | wizard.bid_id._twp_competing_bids()
+            if wizard.opportunity_id == wizard.bid_id.opportunity_id:
+                bids = wizard.bid_id | wizard.bid_id._twp_competing_bids()
+            else:
+                bids = self.env["sale.order"].search([
+                    ("opportunity_id", "=", wizard.opportunity_id.id),
+                    ("twp_is_bid", "=", True),
+                    ("twp_bid_status", "=", "open"),
+                ]) if wizard.opportunity_id else self.env["sale.order"]
             wizard.already_bid_ids = bids.partner_id
 
     def action_apply(self):
@@ -28,7 +46,7 @@ class TwpBidCopy(models.TransientModel):
             raise UserError(_("%s is no longer a bid, so it can't be copied to other bidders.", bid.name))
         copies = self.env["sale.order"]
         for partner in self.partner_ids:
-            copies |= bid._twp_copy_for(partner)
+            copies |= bid._twp_copy_for(partner, self.opportunity_id)
         bid.message_post(body=_("Copied to %s.", ", ".join(copies.mapped(lambda c: f"{c.partner_id.name} ({c.name})"))))
         if len(copies) == 1:
             return {
