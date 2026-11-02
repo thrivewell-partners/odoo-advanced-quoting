@@ -237,6 +237,8 @@ class TestOnlineChoice(ChoiceCase, HttpCase):
         self.assertEqual(bodies.count("Chose Option 2"), 1)
 
     def test_emailed_choice_resent_then_changed_online_and_signed(self):
+        # Signing confirms here; a company that also takes payment online confirms on payment instead.
+        self.order.require_payment = False
         option_one, option_two = self.section(self.order, "Option 1"), self.section(self.order, "Option 2")
         option_two.twp_option_chosen = True
         self.order.action_quotation_send()
