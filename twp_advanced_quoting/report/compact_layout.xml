@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- The compact layout, for quotes and orders when the company prints them that way: the
+         company, its phone and website, and the document's title and number on one line under a
+         rule, and a footer of the company's footer text, tagline and page number. Tables only,
+         because wkhtmltopdf has no flexbox or grid. Invoices and the pro-forma keep the company's
+         own Document Layout. The shapes are in static/src/documents/compact_layout.scss and the
+         colours in report/company_report_styles.xml. -->
+    <template id="external_layout_compact">
+        <t t-if="not o" t-set="o" t-value="doc"/>
+        <t t-if="not company">
+            <t t-if="company_id">
+                <t t-set="company" t-value="company_id"/>
+            </t>
+            <t t-elif="o and 'company_id' in o and o.company_id.sudo()">
+                <t t-set="company" t-value="o.company_id.sudo()"/>
+            </t>
+            <t t-else="">
+                <t t-set="company" t-value="res_company"/>
+            </t>
+        </t>
+
+        <div t-attf-class="header twp_cx_header o_company_#{company.id}_layout">
+            <table class="twp_cx_head">
+                <tr>
+                    <td t-if="company.twp_report_icon or company.logo" class="twp_cx_mark">
+                        <img t-if="company.twp_report_icon" class="twp_cx_icon" t-att-src="image_data_uri(company.twp_report_icon)" alt="Icon"/>
+                        <img t-else="" class="twp_cx_logo" t-att-src="image_data_uri(company.logo)" alt="Logo"/>
+                    </td>
+                    <td class="twp_cx_company">
+                        <div t-if="company.twp_report_icon or not company.logo" class="twp_cx_name" t-out="company.name">Radiant Energy Distribution</div>
+                        <div class="twp_cx_contact" t-out="company._twp_compact_contact()">317-353-3823 | radiantenergydistribution.com</div>
+                    </td>
+                    <td class="twp_cx_doc">
+                        <div class="twp_cx_doc_title" t-out="o._twp_compact_title()">Quotation</div>
+                        <div class="twp_cx_doc_number" t-out="o.name">REDQ0001</div>
+                    </td>
+                </tr>
+            </table>
+            <div class="twp_cx_rule"/>
+        </div>
+
+        <div t-attf-class="article twp_compact o_company_#{company.id}_layout" t-att-data-oe-model="o and o._name" t-att-data-oe-id="o and o.id" t-att-data-oe-lang="o and o.env.context.get('lang')">
+            <t t-out="0"/>
+        </div>
+
+        <div t-attf-class="footer twp_cx_footer o_company_#{company.id}_layout">
+            <div class="twp_cx_foot_rule"/>
+            <table class="twp_cx_foot">
+                <tr>
+                    <td class="twp_cx_foot_text">
+                        <div t-field="company.report_footer"/>
+                    </td>
+                    <td class="twp_cx_foot_side">
+                        <div t-if="not is_html_empty(company.report_header)" class="twp_cx_tagline" t-field="company.report_header"/>
+                        <div t-if="report_type == 'pdf'" class="twp_cx_page">Page <span class="page"/> / <span class="topage"/></div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </template>
+
+    <!-- Quotes and orders print through this report, and only they take the compact layout. Its
+         header is shorter than the company layout's, so the page starts higher. Odoo places the
+         header (top margin - header spacing) from the top of the page, so the two stay equal, as
+         Odoo's own paper formats set them, and the header starts at the top. -->
+    <template id="report_saleorder_raw" inherit_id="sale.report_saleorder_raw">
+        <xpath expr="//t[@t-call='web.html_container']" position="before">
+            <t t-set="twp_compact" t-value="docs[:1].company_id.twp_sale_layout == 'compact'"/>
+            <t t-if="twp_compact">
+                <t t-set="data_report_margin_top" t-value="30"/>
+                <t t-set="data_report_header_spacing" t-value="30"/>
+            </t>
+        </xpath>
+    </template>
+
+</odoo>

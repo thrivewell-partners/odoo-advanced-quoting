@@ -14,3 +14,4 @@ from . import test_m6_line_descriptions
 from . import test_m7_standalone
 from . import test_m8_option_documents
 from . import test_m9_online_choice
+from . import test_m10_compact_layout

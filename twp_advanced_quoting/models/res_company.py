@@ -96,6 +96,30 @@ class ResCompany(models.Model):
         help="Printed above the lines of a new quote, unless its quotation template has its own.",
     )
 
+    # Quote and order layout
+    twp_sale_layout = fields.Selection(
+        [("company", "Document Layout"), ("compact", "Compact")],
+        string="Quote and Order Layout",
+        default="company",
+        required=True,
+        help="How quotes and orders print. Document Layout uses the company's own layout, as "
+             "invoices do. Compact puts the company and the document number on one line, the "
+             "customer, the quote and the job side by side, and shades every other line.",
+    )
+    twp_report_icon = fields.Image(
+        string="Document Icon",
+        max_width=512,
+        max_height=512,
+        help="Printed beside the company name at the top of a compact quote or order. Without it, "
+             "the company logo prints there instead.",
+    )
+
+    def _twp_compact_contact(self):
+        """The phone number and website under the company name on a compact quote or order."""
+        self.ensure_one()
+        website = (self.website or "").removeprefix("https://").removeprefix("http://").rstrip("/")
+        return " | ".join(part for part in (self.phone, website) if part)
+
     def _twp_bundle_adjustment_product(self):
         self.ensure_one()
         return self.twp_bundle_adjustment_product_id or self.env.ref(ADJUSTMENT_PRODUCT, raise_if_not_found=False)

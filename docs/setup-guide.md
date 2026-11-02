@@ -95,6 +95,12 @@ Bring your price books as a spreadsheet and we load them, with each product's ca
   ordinary section again, counted in the total. On the quote each option prints as its own
   shaded block with a tag, in the colour from **Settings > Document Layout** on the PDF and the
   website's theme colour online.
+- **The compact layout:** **Settings > Sales > Quote and Order Layout**, set to **Compact**, prints
+  quotes and orders with the company and the number on one line, the customer, the quote and the
+  job side by side, the introduction under them, and every other line shaded. A bundle's members
+  print their names only. Upload a small square **Icon** there to print beside the company name;
+  without one, the logo prints alone. The phone number comes from the company's own record.
+  Invoices keep the company's Document Layout either way.
 - **Lines on their own after a group:** open the group's **⋮** menu and choose **Add Standalone
   Lines**. A "Standalone items" divider appears after the group; the lines added below it belong
   to no bundle or option and print flush left at their own prices. The divider itself never

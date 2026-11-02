@@ -51,6 +51,9 @@ class ResConfigSettings(models.TransientModel):
     twp_introduction_enabled = fields.Boolean(related="company_id.twp_introduction_enabled", readonly=False)
     twp_introduction_default = fields.Html(related="company_id.twp_introduction_default", readonly=False)
 
+    twp_sale_layout = fields.Selection(related="company_id.twp_sale_layout", readonly=False)
+    twp_report_icon = fields.Image(related="company_id.twp_report_icon", readonly=False)
+
     @api.model
     def _twp_sequence(self, code):
         """The sequence that numbers this company's records with `code`, as `next_by_code` picks it."""

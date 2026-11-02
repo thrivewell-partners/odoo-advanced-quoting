@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- An alternative or add-on on the PDF, in the company's own colour from its Document Layout.
+    <!-- An alternative or add-on on the PDF, and the compact layout's title, rule and total, in the
+         company's own colours from its Document Layout.
          Odoo builds this stylesheet per company and rebuilds it when the layout changes; the
          module rebuilds it when it is installed, upgraded and uninstalled. The shapes and sizes
-         are in static/src/documents/option_blocks.scss. -->
+         are in static/src/documents/option_blocks.scss and compact_layout.scss. -->
     <template id="styles_company_report" inherit_id="web.styles_company_report">
         <xpath expr="//t[@t-if=&quot;layout == 'web.external_layout_boxed'&quot;]" position="before">
                     .twp_opt &gt; td {
@@ -40,6 +41,35 @@
                     .twp_opt_chosen .twp_option_note,
                     .twp_set_head &gt; td,
                     .twp_or &gt; td {
+                        color: <t t-out="primary"/>;
+                    }
+
+                    &amp;.twp_cx_header .twp_cx_doc_number {
+                        color: <t t-out="primary"/>;
+                    }
+
+                    &amp;.twp_cx_header .twp_cx_rule {
+                        background-color: <t t-out="primary"/>;
+                    }
+
+                    &amp;.twp_compact .o_main_table thead th {
+                        border-bottom-color: <t t-out="secondary"/>;
+                    }
+
+                    &amp;.twp_compact #total .o_total td {
+                        background-color: <t t-out="primary"/>;
+                        color: preview-color-contrast(<t t-out="primary"/>);
+
+                        strong {
+                            color: preview-color-contrast(<t t-out="primary"/>);
+                        }
+                    }
+
+                    &amp;.twp_cx_footer .twp_cx_foot_rule {
+                        background-color: <t t-out="secondary"/>;
+                    }
+
+                    &amp;.twp_cx_footer .twp_cx_tagline {
                         color: <t t-out="primary"/>;
                     }
         </xpath>

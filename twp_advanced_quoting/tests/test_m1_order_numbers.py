@@ -9,6 +9,8 @@ class TestOrderAndInvoiceNumbers(TransactionCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
+        # The order PDF is read in the company's Document Layout, not M10's compact one.
+        cls.env.company.twp_sale_layout = "company"
         cls.partner = cls.env["res.partner"].create({"name": "TWP Numbers Customer"})
         cls.product = cls.env["product.product"].create({
             "name": "TWP Numbered Heater", "type": "consu", "list_price": 100, "invoice_policy": "order",
