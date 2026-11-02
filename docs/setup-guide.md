@@ -101,6 +101,18 @@ Bring your price books as a spreadsheet and we load them, with each product's ca
   prints. Deleting it deletes only the divider, and its lines join the group above.
 - **Hiding one line:** the eye at the start of a line keeps it off the PDF, the online page and
   the invoice. It still counts in the price.
+- **The customer chooses online** when **Settings > Sales > Customers Choose Online** is on. On
+  the quote they open from the email, each alternative has **Choose this option** and each add-on
+  **Add** or **Remove**, until they accept. Each choice is a note in the quote's chatter in the
+  customer's name, and the total follows. Accept & Sign appears once every set of alternatives has
+  a pick. Bids are never chosen online.
+- **When the customer tells you instead** (phone, email, in person), **Mark Chosen** records it
+  for them, and the chatter says who recorded it. Then confirm, or send the quote back to sign; the
+  customer can still change it online until they accept.
+- **A quote never goes out with an alternative picked for the customer.** Send and Mark as Sent
+  refuse while an alternative is Chosen that nobody recorded as the customer's choice, which is
+  what Duplicate and imports leave behind. Mark it Not Chosen, or Chosen again if the customer told
+  you. A pre-added add-on is fine.
 - **Confirming** a quote with options asks what the customer chose. What they didn't choose stays
   on the order at quantity 0, as a record, and is never delivered or invoiced.
 
