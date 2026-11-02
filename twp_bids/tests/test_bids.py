@@ -147,20 +147,29 @@ class TestBids(TransactionCase):
         self.assertEqual((bid.twp_bid_status, bid.state), ("lost", "cancel"), "The lost bid stays lost")
 
     def test_duplicate_bid_from_the_project(self):
-        earlier = self.env["crm.lead"].create({
-            "name": "TWP Oak Street Gym", "type": "opportunity", "team_id": self.opportunity.team_id.id,
-        })
-        old_bid = self._bid()
-        old_bid.opportunity_id = earlier
         action = self.opportunity.action_twp_duplicate_bid()
         self.assertFalse(action["context"]["default_bid_id"], "No bid on this project yet")
+        first = self._bid()
+        elsewhere = self.env["crm.lead"].create({
+            "name": "TWP Oak Street Gym", "type": "opportunity", "team_id": self.opportunity.team_id.id,
+        })
+        other = self._bid(self.bidder_c)
+        other.opportunity_id = elsewhere
+        action = self.opportunity.action_twp_duplicate_bid()
+        self.assertEqual(action["context"]["default_bid_id"], first.id, "The project's latest bid")
+        view = self.env.ref("twp_bids.twp_bid_copy_view_form")
+        arch = self.env["twp.bid.copy"].with_context(action["context"]).get_view(view.id, "form")["arch"]
+        self.assertIn("('opportunity_id', '=', context.get('twp_bid_copy_project'))", arch)
+        offered = self.env["sale.order"].search([
+            ("twp_is_bid", "=", True), ("opportunity_id", "=", action["context"]["twp_bid_copy_project"])])
+        self.assertIn(first, offered)
+        self.assertNotIn(other, offered, "Only this project's bids")
         wizard = Form(self.env["twp.bid.copy"].with_context(action["context"]))
-        wizard.bid_id = old_bid
-        self.assertEqual(wizard.opportunity_id, self.opportunity, "The project it was opened from")
+        self.assertEqual(wizard.opportunity_id, self.opportunity)
         wizard.partner_ids.add(self.bidder_b)
         wizard.save().action_apply()
-        copy = self.env["sale.order"].search([("twp_bid_source_id", "=", old_bid.id)])
-        self.assertEqual((copy.opportunity_id, copy.partner_id, copy.twp_job_name), (self.opportunity, self.bidder_b, self.opportunity.name))
+        copy = self.env["sale.order"].search([("twp_bid_source_id", "=", first.id)])
+        self.assertEqual((copy.opportunity_id, copy.partner_id), (self.opportunity, self.bidder_b))
         self.assertEqual(self.opportunity.action_twp_duplicate_bid()["context"]["default_bid_id"], copy.id, "Then its latest bid")
 
     def test_duplicate_bid_lists_bids_with_their_customer(self):

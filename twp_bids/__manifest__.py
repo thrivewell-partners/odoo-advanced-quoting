@@ -12,7 +12,7 @@ opportunity or another one. Won turns the bid into an ordinary quotation with th
 and marks the other open bids on the same opportunity lost; from there it follows the normal Sales
 process. A bid can't be confirmed or accepted online until it is won.
 """,
-    "version": "19.0.0.4.1",
+    "version": "19.0.0.4.2",
     "category": "Sales/Sales",
     "license": "LGPL-3",
     "author": "ThriveWell Partners",

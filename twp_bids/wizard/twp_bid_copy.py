@@ -10,7 +10,7 @@ class TwpBidCopy(models.TransientModel):
 
     bid_id = fields.Many2one(
         "sale.order", string="Bid", required=True, domain=[("twp_is_bid", "=", True)],
-        help="The bid to copy. From a project it can be a bid on any project.",
+        help="The bid to copy. From a project, one of that project's bids.",
     )
     partner_ids = fields.Many2many("res.partner", string="Contractors", required=True)
     opportunity_id = fields.Many2one(
