@@ -78,16 +78,17 @@ class TestCompactLayout(DocumentCase, TransactionCase):
     def test_bundle_shaded_as_one_block(self):
         self.bracket.description_sale = "TWP M10 second line"
         order = self.make_order(bundle_only=True)
-        order.write({"order_line": [Command.create({"product_id": self.fan.id, "product_uom_qty": 1, "sequence": 50})]})
+        # A line above the bundle is the first item, so the bundle is the second, shaded.
+        order.write({"order_line": [Command.create({"product_id": self.fan.id, "product_uom_qty": 1, "sequence": 5})]})
         page = self.render_quote(order)
         tree = self.tree(page)
+        fan = [row for row in self.product_rows(page) if "TWP Fan" in row.text_content()][0]
+        self.assertNotIn("twp_cx_z", fan.get("class") or "")
         bundle = tree.xpath("//tr[@name='twp_tr_bundle']")[0]
-        self.assertNotIn("twp_cx_z", bundle.get("class"))
+        self.assertIn("twp_cx_z", bundle.get("class"))
         members = [row for row in self.product_rows(page) if "twp_cx_member" in (row.get("class") or "")]
         self.assertEqual(len(members), 2)
-        self.assertFalse(any("twp_cx_z" in row.get("class") for row in members))
-        fan = [row for row in self.product_rows(page) if "TWP Fan" in row.text_content()][0]
-        self.assertIn("twp_cx_z", fan.get("class"))
+        self.assertTrue(all("twp_cx_z" in row.get("class") for row in members))
         # A member prints its product's name only, not its description.
         self.assertIn("TWP Bracket", page)
         self.assertNotIn("TWP M10 second line", page)
