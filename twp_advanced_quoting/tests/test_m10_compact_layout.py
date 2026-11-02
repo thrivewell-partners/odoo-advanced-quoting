@@ -54,7 +54,7 @@ class TestCompactLayout(DocumentCase, TransactionCase):
     def test_margins(self):
         root = self.tree(self.render_quote(self.make_quote()))
         self.assertEqual(root.get("data-report-margin-top"), "30")
-        self.assertEqual(root.get("data-report-header-spacing"), "4")
+        self.assertEqual(root.get("data-report-header-spacing"), "30")
 
     def test_every_other_line_shaded(self):
         order = self.make_quote()

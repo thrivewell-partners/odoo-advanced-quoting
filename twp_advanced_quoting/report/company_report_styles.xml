@@ -65,8 +65,8 @@
                         }
                     }
 
-                    &amp;.twp_cx_footer .twp_cx_foot td {
-                        border-top-color: <t t-out="secondary"/>;
+                    &amp;.twp_cx_footer .twp_cx_foot_rule {
+                        background-color: <t t-out="secondary"/>;
                     }
 
                     &amp;.twp_cx_footer .twp_cx_tagline {

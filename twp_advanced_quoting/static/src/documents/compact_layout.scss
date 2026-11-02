@@ -8,19 +8,33 @@ $twp-cx-label: #4a5b69;
 $twp-cx-line: #e1e6ea;
 $twp-cx-shade: #f1f4f6;
 
+// Odoo's report stylesheet draws a border on every part of every table, so the layout's own
+// tables take theirs off, part by part.
+table.twp_cx_head,
+table.twp_cx_info,
+table.twp_cx_foot {
+    &,
+    tbody,
+    tr,
+    td {
+        border: 0 !important;
+    }
+}
+
 .twp_cx_header {
     table.twp_cx_head {
         width: 100%;
         border-collapse: collapse;
 
-        td {
+        td.twp_cx_company,
+        td.twp_cx_doc {
             padding: 0;
             border: 0;
             vertical-align: middle;
         }
     }
 
-    td.twp_cx_mark {
+    table.twp_cx_head td.twp_cx_mark {
         width: 1%;
         padding-right: .6rem;
         white-space: nowrap;
@@ -157,8 +171,6 @@ $twp-cx-shade: #f1f4f6;
 
         td {
             padding: .4rem 0 0;
-            border: 0;
-            border-top: 1px solid;
             font-size: .8rem;
             vertical-align: top;
         }
@@ -166,6 +178,10 @@ $twp-cx-shade: #f1f4f6;
         p {
             margin: 0;
         }
+    }
+
+    .twp_cx_foot_rule {
+        height: 1px;
     }
 
     td.twp_cx_foot_side {

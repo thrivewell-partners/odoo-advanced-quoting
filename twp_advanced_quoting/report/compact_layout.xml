@@ -46,6 +46,7 @@
         </div>
 
         <div t-attf-class="footer twp_cx_footer o_company_#{company.id}_layout">
+            <div class="twp_cx_foot_rule"/>
             <table class="twp_cx_foot">
                 <tr>
                     <td class="twp_cx_foot_text">
@@ -61,15 +62,15 @@
     </template>
 
     <!-- Quotes and orders print through this report, and only they take the compact layout. Its
-         header is shorter than the company layout's, so the page starts higher. A header spacing
-         as large as the top margin, as Odoo's paper formats set it, pushes the header off the
-         page, so it is kept small. -->
+         header is shorter than the company layout's, so the page starts higher. Odoo places the
+         header (top margin - header spacing) from the top of the page, so the two stay equal, as
+         Odoo's own paper formats set them, and the header starts at the top. -->
     <template id="report_saleorder_raw" inherit_id="sale.report_saleorder_raw">
         <xpath expr="//t[@t-call='web.html_container']" position="before">
             <t t-set="twp_compact" t-value="docs[:1].company_id.twp_sale_layout == 'compact'"/>
             <t t-if="twp_compact">
                 <t t-set="data_report_margin_top" t-value="30"/>
-                <t t-set="data_report_header_spacing" t-value="4"/>
+                <t t-set="data_report_header_spacing" t-value="30"/>
             </t>
         </xpath>
     </template>
