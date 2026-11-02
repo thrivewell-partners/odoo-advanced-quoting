@@ -9,6 +9,8 @@
             <xpath expr="//button[@name='action_sale_quotations_new']" position="after">
                 <button string="New Bid" name="action_twp_new_bid" type="object"
                         invisible="type == 'lead' or probability == 0 and not active"/>
+                <button string="Duplicate Bid" name="action_twp_duplicate_bid" type="object"
+                        invisible="type == 'lead' or probability == 0 and not active"/>
             </xpath>
             <xpath expr="//button[@name='action_view_sale_quotation']" position="before">
                 <button class="oe_stat_button" type="object" name="action_twp_view_bids" icon="fa-gavel"

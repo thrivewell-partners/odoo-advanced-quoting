@@ -33,6 +33,24 @@ class CrmLead(models.Model):
         })
         return action
 
+    def action_twp_duplicate_bid(self):
+        """Duplicate for Contractor onto this opportunity, from its latest bid or any other."""
+        self.ensure_one()
+        latest = self.env["sale.order"].search(
+            [("opportunity_id", "=", self.id), ("twp_is_bid", "=", True)], order="id desc", limit=1)
+        return {
+            "type": "ir.actions.act_window",
+            "name": _("Duplicate Bid"),
+            "res_model": "twp.bid.copy",
+            "view_mode": "form",
+            "target": "new",
+            "context": {
+                "default_bid_id": latest.id,
+                "default_opportunity_id": self.id,
+                "twp_bid_copy_project": True,
+            },
+        }
+
     def action_twp_view_bids(self):
         self.ensure_one()
         action = self.env["ir.actions.actions"]._for_xml_id("twp_bids.action_bids")

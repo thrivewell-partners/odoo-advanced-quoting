@@ -146,6 +146,23 @@ class TestBids(TransactionCase):
         self.assertEqual((copy.twp_is_bid, copy.twp_bid_status, copy.state), (True, "open", "draft"))
         self.assertEqual((bid.twp_bid_status, bid.state), ("lost", "cancel"), "The lost bid stays lost")
 
+    def test_duplicate_bid_from_the_project(self):
+        earlier = self.env["crm.lead"].create({
+            "name": "TWP Oak Street Gym", "type": "opportunity", "team_id": self.opportunity.team_id.id,
+        })
+        old_bid = self._bid()
+        old_bid.opportunity_id = earlier
+        action = self.opportunity.action_twp_duplicate_bid()
+        self.assertFalse(action["context"]["default_bid_id"], "No bid on this project yet")
+        wizard = Form(self.env["twp.bid.copy"].with_context(action["context"]))
+        wizard.bid_id = old_bid
+        self.assertEqual(wizard.opportunity_id, self.opportunity, "The project it was opened from")
+        wizard.partner_ids.add(self.bidder_b)
+        wizard.save().action_apply()
+        copy = self.env["sale.order"].search([("twp_bid_source_id", "=", old_bid.id)])
+        self.assertEqual((copy.opportunity_id, copy.partner_id, copy.twp_job_name), (self.opportunity, self.bidder_b, self.opportunity.name))
+        self.assertEqual(self.opportunity.action_twp_duplicate_bid()["context"]["default_bid_id"], copy.id, "Then its latest bid")
+
     def test_duplicate_onto_another_project(self):
         bid = self._bid()
         other = self.env["crm.lead"].create({

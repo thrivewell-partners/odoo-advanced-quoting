@@ -11,7 +11,8 @@
                     and their own addresses and payment terms. Each copy is edited on its own.
                 </p>
                 <group>
-                    <field name="bid_id"/>
+                    <field name="bid_id" readonly="not context.get('twp_bid_copy_project')"
+                           options="{'no_create': True}"/>
                     <field name="partner_ids" widget="many2many_tags"
                            options="{'no_create_edit': True}" context="{'res_partner_search_mode': 'customer'}"/>
                     <field name="opportunity_id" options="{'no_create': True}"/>
