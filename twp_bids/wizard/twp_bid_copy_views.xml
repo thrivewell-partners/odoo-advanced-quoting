@@ -11,8 +11,9 @@
                     and their own addresses and payment terms. Each copy is edited on its own.
                 </p>
                 <group>
-                    <!-- Each bid reads with its customer, and is found by it. -->
+                    <!-- Opened from a project, its own bids are offered, each with its customer. -->
                     <field name="bid_id" readonly="not context.get('twp_bid_copy_project')"
+                           domain="[('twp_is_bid', '=', True), ('opportunity_id', '=', context.get('twp_bid_copy_project'))]"
                            options="{'no_create': True}" context="{'sale_show_partner_name': True}"/>
                     <field name="partner_ids" widget="many2many_tags"
                            options="{'no_create_edit': True}" context="{'res_partner_search_mode': 'customer'}"/>

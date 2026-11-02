@@ -34,7 +34,7 @@ class CrmLead(models.Model):
         return action
 
     def action_twp_duplicate_bid(self):
-        """Duplicate for Contractor onto this opportunity, from its latest bid or any other."""
+        """Duplicate for Contractor from one of this opportunity's bids, its latest to start with."""
         self.ensure_one()
         latest = self.env["sale.order"].search(
             [("opportunity_id", "=", self.id), ("twp_is_bid", "=", True)], order="id desc", limit=1)
@@ -47,7 +47,7 @@ class CrmLead(models.Model):
             "context": {
                 "default_bid_id": latest.id,
                 "default_opportunity_id": self.id,
-                "twp_bid_copy_project": True,
+                "twp_bid_copy_project": self.id,
             },
         }
 
