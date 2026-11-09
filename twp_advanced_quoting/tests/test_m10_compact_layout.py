@@ -45,6 +45,38 @@ class TestCompactLayout(DocumentCase, TransactionCase):
         for text in ("Job Name Main Street School", "Freight Prepaid and Add", "Estimated Lead Time 2-3 weeks"):
             self.assertIn(text, job)
 
+    def pairs(self, tree, box):
+        """[(label, value)] in one of the info row's boxes."""
+        return [
+            tuple(" ".join(cell.text_content().split()) for cell in row.xpath("./td"))
+            for row in tree.xpath(f"//td[@name='{box}']//table[contains(@class, 'twp_cx_pairs')]//tr")
+        ]
+
+    def test_labels_and_values_in_their_own_cells(self):
+        order = self.make_quote()
+        tree = self.tree(self.render_quote(order))
+        job = self.pairs(tree, "twp_cx_job")
+        self.assertIn(("Job Name", "Main Street School"), job)
+        self.assertIn(("Freight", "Prepaid and Add"), job)
+        self.assertIn(("Estimated Lead Time", "2-3 weeks"), job)
+        self.assertEqual(job[0], ("Job Name", "Main Street School"))
+        self.assertIn("Salesperson", [label for label, _value in self.pairs(tree, "twp_cx_document")])
+        boxes = tree.xpath("//table[@name='twp_cx_info']//td[contains(@class, 'twp_cx_box')]")
+        self.assertEqual([box.get("name") for box in boxes], ["twp_cx_customer", "twp_cx_document", "twp_cx_job"])
+
+    def test_job_name_leads(self):
+        tree = self.tree(self.render_quote(self.make_quote()))
+        feature = tree.xpath("//tr[contains(@class, 'twp_cx_feature')]")
+        self.assertEqual(len(feature), 1)
+        self.assertEqual(feature[0].get("name"), "twp_job_name")
+
+    def test_no_job_box_without_job_fields(self):
+        order = self.make_quote()
+        order.write({field["name"]: False for field in order._twp_header_fields()})
+        tree = self.tree(self.render_quote(order))
+        self.assertFalse(tree.xpath("//td[@name='twp_cx_job']"))
+        self.assertEqual(len(tree.xpath("//table[@name='twp_cx_info']//td[contains(@class, 'twp_cx_gap')]")), 1)
+
     def test_introduction_under_the_info_row(self):
         page = self.render_quote(self.make_quote())
         intro = page.index("Here is the quote you requested.")

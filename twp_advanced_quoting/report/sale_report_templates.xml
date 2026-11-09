@@ -47,39 +47,72 @@
             <attribute name="t-call">{{ 'twp_advanced_quoting.external_layout_compact' if twp_compact else 'web.external_layout' }}</attribute>
         </xpath>
 
-        <!-- In the compact layout the customer, the quote and the job sit side by side, in place
-             of the address block and the row of dates. The introduction follows, then the lines. -->
+        <!-- In the compact layout the customer, the quote and the job sit side by side, each in a box
+             under a shaded heading, in place of the address block and the row of dates. In the quote
+             and job boxes each label and its value are their own cells, so they line up. The job's
+             box is left out when it has nothing to print. The introduction follows, then the lines. -->
         <xpath expr="//div[@id='informations']" position="before">
             <table t-if="twp_compact" class="twp_cx_info" name="twp_cx_info">
+                <t t-set="twp_cx_fields" t-value="doc._twp_header_fields()"/>
                 <tr>
-                    <td class="twp_cx_info_customer" name="twp_cx_customer">
+                    <td class="twp_cx_box twp_cx_info_customer" name="twp_cx_customer">
                         <div class="twp_cx_label">
                             <t t-if="doc.state in ('draft', 'sent')">Quote for</t>
                             <t t-else="">Order for</t>
                         </div>
-                        <t t-out="address"/>
-                        <div t-if="information_block" class="twp_cx_info_more" t-out="information_block"/>
+                        <div class="twp_cx_box_body">
+                            <t t-out="address"/>
+                            <div t-if="information_block" class="twp_cx_info_more" t-out="information_block"/>
+                        </div>
                     </td>
-                    <td class="twp_cx_info_document" name="twp_cx_document">
+                    <td class="twp_cx_gap"/>
+                    <td class="twp_cx_box twp_cx_info_document" name="twp_cx_document">
                         <div class="twp_cx_label">
                             <t t-if="doc.state in ('draft', 'sent')">Quote</t>
                             <t t-else="">Order</t>
                         </div>
-                        <div t-if="doc.twp_quote_number and doc.twp_quote_number != doc.name">Quote number <span t-field="doc.twp_quote_number">REDQ0001</span></div>
-                        <div t-if="doc.client_order_ref">Your reference <span t-field="doc.client_order_ref">PO 1234</span></div>
-                        <div t-if="doc.date_order">Date <span t-field="doc.date_order" t-options="{'widget': 'date'}">2023-12-31</span></div>
-                        <div t-if="doc.validity_date and doc.state in ('draft', 'sent')">Expires <span t-field="doc.validity_date">2023-12-31</span></div>
-                        <div t-if="doc.commitment_date">Delivery <span t-field="doc.commitment_date" t-options="{'widget': 'date'}">2023-12-31</span></div>
-                        <div t-if="doc.user_id.name">Salesperson <span t-field="doc.user_id">Mitchell Admin</span></div>
+                        <div class="twp_cx_box_body">
+                            <table class="twp_cx_pairs">
+                                <tr t-if="doc.twp_quote_number and doc.twp_quote_number != doc.name">
+                                    <td class="twp_cx_key">Quote number</td>
+                                    <td class="twp_cx_value"><span t-field="doc.twp_quote_number">REDQ0001</span></td>
+                                </tr>
+                                <tr t-if="doc.client_order_ref">
+                                    <td class="twp_cx_key">Your reference</td>
+                                    <td class="twp_cx_value"><span t-field="doc.client_order_ref">PO 1234</span></td>
+                                </tr>
+                                <tr t-if="doc.date_order">
+                                    <td class="twp_cx_key">Date</td>
+                                    <td class="twp_cx_value"><span t-field="doc.date_order" t-options="{'widget': 'date'}">2023-12-31</span></td>
+                                </tr>
+                                <tr t-if="doc.validity_date and doc.state in ('draft', 'sent')">
+                                    <td class="twp_cx_key">Expires</td>
+                                    <td class="twp_cx_value"><span t-field="doc.validity_date">2023-12-31</span></td>
+                                </tr>
+                                <tr t-if="doc.commitment_date">
+                                    <td class="twp_cx_key">Delivery</td>
+                                    <td class="twp_cx_value"><span t-field="doc.commitment_date" t-options="{'widget': 'date'}">2023-12-31</span></td>
+                                </tr>
+                                <tr t-if="doc.user_id.name">
+                                    <td class="twp_cx_key">Salesperson</td>
+                                    <td class="twp_cx_value"><span t-field="doc.user_id">Mitchell Admin</span></td>
+                                </tr>
+                            </table>
+                        </div>
                     </td>
-                    <td class="twp_cx_info_job" name="twp_cx_job">
-                        <t t-set="twp_cx_fields" t-value="doc._twp_header_fields()"/>
-                        <t t-if="twp_cx_fields">
-                            <div class="twp_cx_label">Job</div>
-                            <div t-foreach="twp_cx_fields" t-as="twp_field" t-att-name="twp_field['name']">
-                                <t t-out="twp_field['label']">Freight</t> <t t-out="twp_field['value']">Prepaid and Add</t>
-                            </div>
-                        </t>
+                    <td t-if="twp_cx_fields" class="twp_cx_gap"/>
+                    <td t-if="twp_cx_fields" class="twp_cx_box twp_cx_info_job" name="twp_cx_job">
+                        <div class="twp_cx_label">Job</div>
+                        <div class="twp_cx_box_body">
+                            <table class="twp_cx_pairs">
+                                <!-- The job's name leads, a little larger. -->
+                                <tr t-foreach="twp_cx_fields" t-as="twp_field" t-att-name="twp_field['name']"
+                                    t-att-class="'twp_cx_feature' if twp_field['name'] == 'twp_job_name' else None">
+                                    <td class="twp_cx_key" t-out="twp_field['label']">Freight</td>
+                                    <td class="twp_cx_value" t-out="twp_field['value']">Prepaid and Add</td>
+                                </tr>
+                            </table>
+                        </div>
                     </td>
                 </tr>
             </table>
