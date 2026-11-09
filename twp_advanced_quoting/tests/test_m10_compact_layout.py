@@ -153,3 +153,52 @@ class TestCompactLayout(DocumentCase, TransactionCase):
         self.assertEqual(company._twp_compact_contact(), "317-555-0100 | example.com")
         page = self.render_quote(self.make_quote())
         self.assertIn("317-555-0100 | example.com", page)
+
+    def make_split_address_quote(self):
+        """A quote whose invoicing and delivery addresses are contacts of their own."""
+        billing = self.env["res.partner"].create({
+            "name": "TWP Billing Desk", "type": "invoice", "parent_id": self.partner.id, "street": "1 Ledger Way",
+        })
+        shipping = self.env["res.partner"].create({
+            "name": "TWP Job Site", "type": "delivery", "parent_id": self.partner.id, "street": "9 Dock Road",
+        })
+        order = self.make_quote()
+        order.write({"partner_invoice_id": billing.id, "partner_shipping_id": shipping.id})
+        return order
+
+    def test_customer_box_shows_the_customer_only(self):
+        order = self.make_split_address_quote()
+        page = self.render_quote(order)
+        customer = self.tree(page).xpath("//td[@name='twp_cx_customer']")[0].text_content()
+        self.assertIn("TWP Test Customer", customer)
+        for text in ("TWP Billing Desk", "1 Ledger Way", "TWP Job Site", "9 Dock Road"):
+            self.assertNotIn(text, page)
+        for text in ("Invoicing Address", "Shipping Address"):
+            self.assertNotIn(text, page)
+
+    def test_confirmed_order_shows_the_customer_only(self):
+        order = self.make_split_address_quote()
+        order.action_confirm()
+        page = self.render_quote(order)
+        for text in ("TWP Billing Desk", "TWP Job Site"):
+            self.assertNotIn(text, page)
+
+    def test_invoice_keeps_both_addresses(self):
+        order = self.make_split_address_quote()
+        order.action_confirm()
+        page = self.render_invoice(order._create_invoices())
+        for text in ("1 Ledger Way", "9 Dock Road"):
+            self.assertIn(text, page)
+
+    def test_no_terms_and_conditions(self):
+        order = self.make_quote()
+        order.note = "<p>TWP M10 terms</p>"
+        self.assertNotIn("TWP M10 terms", self.render_quote(order))
+
+    def test_document_layout_keeps_terms_and_addresses(self):
+        self.env.company.twp_sale_layout = "company"
+        order = self.make_split_address_quote()
+        order.note = "<p>TWP M10 terms</p>"
+        page = self.render_quote(order)
+        for text in ("TWP M10 terms", "TWP Billing Desk", "TWP Job Site"):
+            self.assertIn(text, page)
