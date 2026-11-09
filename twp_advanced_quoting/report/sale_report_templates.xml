@@ -60,9 +60,9 @@
                             <t t-if="doc.state in ('draft', 'sent')">Quote for</t>
                             <t t-else="">Order for</t>
                         </div>
+                        <!-- The customer only. Odoo's invoicing and shipping addresses print on the invoice. -->
                         <div class="twp_cx_box_body">
                             <t t-out="address"/>
-                            <div t-if="information_block" class="twp_cx_info_more" t-out="information_block"/>
                         </div>
                     </td>
                     <td class="twp_cx_gap"/>
@@ -116,6 +116,10 @@
                     </td>
                 </tr>
             </table>
+        </xpath>
+        <!-- The compact layout prints no Terms &amp; Conditions; the payment terms stay. -->
+        <xpath expr="//span[@name='order_note']" position="attributes">
+            <attribute name="t-if">not twp_compact</attribute>
         </xpath>
         <xpath expr="//div[@id='informations']" position="attributes">
             <attribute name="t-if">not twp_compact</attribute>
