@@ -48,6 +48,10 @@
                         color: <t t-out="primary"/>;
                     }
 
+                    &amp;.twp_compact td.twp_cx_box &gt; .twp_cx_label {
+                        border-bottom-color: <t t-out="primary"/>;
+                    }
+
                     &amp;.twp_cx_header .twp_cx_rule {
                         background-color: <t t-out="primary"/>;
                     }

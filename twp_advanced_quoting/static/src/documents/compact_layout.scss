@@ -7,6 +7,8 @@ $twp-cx-muted: #5b6873;
 $twp-cx-label: #4a5b69;
 $twp-cx-line: #e1e6ea;
 $twp-cx-shade: #f1f4f6;
+$twp-cx-box: #d6dce1;
+$twp-cx-ink: #1f2a33;
 
 // Odoo's report stylesheet draws a border on every part of every table, so the layout's own
 // tables take theirs off, part by part.
@@ -96,23 +98,77 @@ table.twp_cx_foot {
         color: $twp-cx-label;
     }
 
+    // The customer, the quote and the job, each in a box under a shaded heading. The heading's
+    // rule takes the company's primary colour (report/company_report_styles.xml).
     table.twp_cx_info {
         width: 100%;
-        margin-bottom: 1rem;
-        border-collapse: collapse;
+        margin-bottom: 1.1rem;
+        border-collapse: separate !important;
+        border-spacing: 0;
 
         td {
-            padding: 0 1rem 0 0;
-            border: 0;
+            padding: 0;
             vertical-align: top;
         }
 
+        td.twp_cx_box {
+            border: 1px solid $twp-cx-box !important;
+        }
+
+        td.twp_cx_gap {
+            width: 1.5%;
+        }
+
         td.twp_cx_info_customer {
-            width: 34%;
+            width: 33%;
         }
 
         td.twp_cx_info_document {
             width: 30%;
+        }
+    }
+
+    td.twp_cx_box > .twp_cx_label {
+        padding: .25rem .55rem;
+        background-color: $twp-cx-shade;
+        border-bottom: 2px solid;
+        color: $twp-cx-ink;
+    }
+
+    .twp_cx_box_body {
+        padding: .4rem .55rem .45rem;
+    }
+
+    // A label and its value are cells of their own, on one baseline.
+    table.twp_cx_pairs {
+        width: 100%;
+        margin: 0;
+        border-collapse: collapse;
+
+        td {
+            padding: .08rem 0;
+            vertical-align: baseline;
+        }
+
+        td.twp_cx_key {
+            width: 1%;
+            padding-right: .8rem;
+            white-space: nowrap;
+            font-size: .85rem;
+            color: $twp-cx-muted;
+        }
+
+        td.twp_cx_value {
+            color: $twp-cx-ink;
+        }
+
+        tr.twp_cx_feature td {
+            padding-bottom: .25rem;
+        }
+
+        tr.twp_cx_feature td.twp_cx_value {
+            font-size: 1.05rem;
+            font-weight: bold;
         }
     }
 
