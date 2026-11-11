@@ -83,6 +83,12 @@
             <xpath expr="//field[@name='order_line']/list/field[@name='price_unit']" position="after">
                 <field name="twp_hide_price" optional="hide" invisible="display_type"/>
             </xpath>
+            <!-- A pricelist's Discount % rule puts list in Unit Price and its percentage in Disc.%,
+                 so the price the customer pays sits beside them while quoting. -->
+            <xpath expr="//field[@name='order_line']/list/field[@name='discount']" position="after">
+                <field name="twp_net_price_unit" optional="show" invisible="display_type"
+                       groups="sale.group_discount_per_so_line"/>
+            </xpath>
             <!-- An eye at the start of each line hides it on documents, one line of a bundle at a
                  time. A section's row leaves the cell to its title. -->
             <xpath expr="//field[@name='order_line']/list/field[@name='sequence']" position="after">
