@@ -116,6 +116,12 @@ class SaleOrderLine(models.Model):
         string="Hide Price",
         help="Printed with its quantity and no price. Its price still counts in the section and the total.",
     )
+    twp_net_price_unit = fields.Monetary(
+        string="Net Unit Price",
+        compute="_compute_twp_net_price_unit",
+        help="The unit price with the line's discount taken off. Shown while quoting only; what "
+             "prints is the document style's choice.",
+    )
 
     # ------------------------------------------------------------
     # Section membership
@@ -192,6 +198,11 @@ class SaleOrderLine(models.Model):
     def _compute_twp_in_bundle(self):
         for line in self:
             line.twp_in_bundle = bool(line._twp_bundle())
+
+    @api.depends("display_type", "price_unit", "discount")
+    def _compute_twp_net_price_unit(self):
+        for line in self:
+            line.twp_net_price_unit = 0.0 if line.display_type else line._get_discounted_price()
 
     def _twp_option_section(self):
         self.ensure_one()

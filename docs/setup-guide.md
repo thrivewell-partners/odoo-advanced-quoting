@@ -70,6 +70,9 @@ handle what most distributors do:
   customer. Their quotes price themselves.
 - **Net prices, no discount column.** Leave Odoo's Discounts setting off, so each rule's discount
   is taken off the unit price and the customer sees one net price. The styles also print net.
+- **Or keep Discounts on,** if salespeople need a manual discount on a line. A Discount % rule then
+  puts list in Unit Price and its percentage in Disc.%, and a Net Unit Price column beside them
+  shows the price after discount while quoting. A style set to net prices still prints one net price.
 - **A one-off price** is typed on the line, and Odoo keeps it.
 - **Cost** is each product's Cost field (list less your vendor discount), which gives the margin on
   each line, each bundle and each option on the quote's Margins tab.
