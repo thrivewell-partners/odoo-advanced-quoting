@@ -16,3 +16,4 @@ from . import test_m8_option_documents
 from . import test_m9_online_choice
 from . import test_m10_compact_layout
 from . import test_m11_net_unit_price
+from . import test_m12_mobile_lines

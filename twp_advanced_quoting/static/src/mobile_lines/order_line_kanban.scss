@@ -1,0 +1,238 @@
+// The quote lines on a phone: bundles and options as shaded blocks that fold, as on the PDF.
+
+.o_twp_m_lines {
+    gap: 8px;
+
+    .o_kanban_record {
+        width: 100%;
+        margin: 0;
+    }
+
+    .o_twp_m_amount {
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+    }
+
+    .o_twp_m_title {
+        font-weight: 700;
+    }
+
+    .o_twp_m_menu {
+        width: 44px;
+        height: 44px;
+        color: $o-gray-700;
+    }
+}
+
+.o_twp_m_section {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 0 0 4px;
+    font-size: 1.05rem;
+
+    .o_twp_m_title {
+        flex-grow: 1;
+    }
+
+    &.o_twp_m_subsection {
+        font-size: 1rem;
+    }
+}
+
+.o_twp_m_divider {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 4px;
+    color: $o-gray-700;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    text-decoration: none;
+    letter-spacing: 0.06em;
+
+    .o_twp_m_rule {
+        flex-grow: 1;
+        border-top: 1px dashed $o-gray-500;
+    }
+}
+
+.o_twp_m_choose {
+    padding: 4px 4px 0;
+    color: #17457a;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.o_twp_m_or {
+    text-align: center;
+    color: $o-gray-700;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+}
+
+.o_twp_m_group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 4px 4px 10px;
+    border-radius: 10px;
+
+    &.o_twp_m_folded {
+        padding-bottom: 4px;
+    }
+
+    &.o_twp_m_bundle {
+        background: #ece6eb;
+        border: 1px solid #cdbfca;
+    }
+
+    &.o_twp_m_alternative {
+        background: #e6eef8;
+        border: 1px solid #b9cde6;
+    }
+
+    &.o_twp_m_off {
+        background: #eef0f2;
+        border: 1px dashed #b8bcc2;
+
+        .o_twp_m_title,
+        .o_twp_m_amount {
+            color: $o-gray-700;
+        }
+    }
+
+    &.o_twp_m_addon {
+        background: #fbf1e6;
+        border: 1px solid #e6c8a6;
+    }
+}
+
+.o_twp_m_head {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.o_twp_m_fold {
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    min-height: 56px;
+    padding: 6px 4px 6px 8px;
+    border: 0;
+    background: none;
+    color: inherit;
+    text-align: left;
+
+    > .fa {
+        color: $o-gray-700;
+    }
+}
+
+.o_twp_m_head_text {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.o_twp_m_chips {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+}
+
+.o_twp_m_meta {
+    color: $o-gray-700;
+    font-size: 0.85rem;
+}
+
+.o_twp_m_badge {
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    white-space: nowrap;
+    background: #e2e4e7;
+    color: #4b5058;
+}
+
+.o_twp_m_bundle .o_twp_m_badge_kind {
+    background: #ddd0da;
+    color: #4e2f47;
+}
+
+.o_twp_m_alternative .o_twp_m_badge_kind,
+.o_twp_m_off .o_twp_m_badge_kind {
+    background: #d3e2f5;
+    color: #17457a;
+}
+
+.o_twp_m_addon .o_twp_m_badge_kind {
+    background: #f6dfc4;
+    color: #7a3f0a;
+}
+
+.o_twp_m_badge_chosen {
+    background: #d4eedd;
+    color: #195c32;
+}
+
+.o_twp_m_inner {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 0 6px;
+}
+
+.o_twp_m_bundle_qty {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: $o-gray-700;
+}
+
+.o_twp_m_stepper {
+    display: flex;
+    align-items: center;
+    border: 1px solid $o-gray-400;
+    border-radius: 6px;
+    background: $o-white;
+
+    button {
+        width: 44px;
+        height: 36px;
+        border: 0;
+        background: none;
+        color: $o-action;
+        font-size: 1.1rem;
+
+        &:disabled {
+            color: $o-gray-400;
+        }
+    }
+
+    span {
+        min-width: 28px;
+        text-align: center;
+        font-weight: 600;
+        color: $o-gray-900;
+    }
+}
+
+// The card's own marks: a line hidden on documents, or printed without its price.
+.o_twp_m_tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
