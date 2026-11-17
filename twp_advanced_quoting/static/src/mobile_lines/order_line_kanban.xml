@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="twp_advanced_quoting.OrderLineKanbanRenderer">
+        <div class="o_kanban_renderer o_renderer o_kanban_ungrouped o_twp_m_lines d-flex flex-column user-select-none" t-ref="root">
+            <t t-call="twp_advanced_quoting.OrderLineKanbanNodes">
+                <t t-set="nodes" t-value="twpBlocks"/>
+            </t>
+        </div>
+    </t>
+
+    <t t-name="twp_advanced_quoting.OrderLineKanbanNodes">
+        <t t-foreach="nodes" t-as="node" t-key="node.key">
+            <t t-set="record" t-value="node.record"/>
+            <t t-if="node.kind === 'line'">
+                <t t-call="twp_advanced_quoting.OrderLineKanbanCard"/>
+            </t>
+            <t t-elif="node.kind === 'standalone'">
+                <button type="button" class="o_twp_m_divider btn btn-link" t-on-click="() => props.openRecord(record)">
+                    <span t-esc="record.data.name"/><i class="o_twp_m_rule"/>
+                </button>
+                <t t-call="twp_advanced_quoting.OrderLineKanbanNodes">
+                    <t t-set="nodes" t-value="node.children"/>
+                </t>
+            </t>
+            <t t-elif="node.kind === 'section'">
+                <div class="o_twp_m_section" t-att-class="isSubSection(record) ? 'o_twp_m_subsection' : ''" t-att-data-id="record.id">
+                    <span class="o_twp_m_title" t-esc="record.data.name"/>
+                    <span class="o_twp_m_amount" t-esc="twpTotal(node)"/>
+                    <t t-call="twp_advanced_quoting.OrderLineKanbanMenu"/>
+                </div>
+                <t t-call="twp_advanced_quoting.OrderLineKanbanNodes">
+                    <t t-set="nodes" t-value="node.children"/>
+                </t>
+            </t>
+            <t t-else="">
+                <t t-call="twp_advanced_quoting.OrderLineKanbanGroup"/>
+            </t>
+        </t>
+    </t>
+
+    <t t-name="twp_advanced_quoting.OrderLineKanbanGroup">
+        <t t-set="folded" t-value="twpIsFolded(record)"/>
+        <div t-if="node.chooseOne" class="o_twp_m_choose">
+            Choose one<t t-if="record.data.twp_option_group"> · <t t-esc="record.data.twp_option_group"/></t>
+        </div>
+        <div t-if="node.orBefore" class="o_twp_m_or">OR</div>
+        <div class="o_twp_m_group" t-att-class="twpKindClass(record) + (folded ? ' o_twp_m_folded' : '')" t-att-data-id="record.id">
+            <div class="o_twp_m_head">
+                <button type="button" class="o_twp_m_fold" t-att-aria-expanded="folded ? 'false' : 'true'" t-on-click="() => this.twpToggleFold(record)">
+                    <i class="fa fa-fw" t-att-class="folded ? 'fa-chevron-down' : 'fa-chevron-up'" aria-hidden="true"/>
+                    <span class="o_twp_m_head_text">
+                        <span class="o_twp_m_title" t-esc="record.data.name"/>
+                        <span class="o_twp_m_chips">
+                            <span class="o_twp_m_badge o_twp_m_badge_kind" t-esc="twpKindLabel(record)"/>
+                            <span t-if="twpStatus(record)" class="o_twp_m_badge o_twp_m_badge_status" t-att-class="record.data.twp_option_chosen ? 'o_twp_m_badge_chosen' : ''" t-esc="twpStatus(record)"/>
+                            <span class="o_twp_m_meta"><t t-esc="twpItemCount(node)"/><t t-if="twpInTotal(record)"> · <t t-esc="twpInTotal(record)"/></t></span>
+                        </span>
+                    </span>
+                    <span class="o_twp_m_amount" t-esc="twpTotal(node)"/>
+                </button>
+                <t t-call="twp_advanced_quoting.OrderLineKanbanMenu"/>
+            </div>
+            <div t-if="!folded" class="o_twp_m_inner">
+                <div t-if="record.data.twp_is_bundle" class="o_twp_m_bundle_qty">
+                    <span>Bundle Qty</span>
+                    <div class="o_twp_m_stepper">
+                        <button type="button" t-if="twpCanEdit" aria-label="One fewer bundle" t-att-disabled="record.data.twp_bundle_qty &lt;= 1" t-on-click="() => this.twpStepBundle(record, -1)">−</button>
+                        <span t-esc="record.data.twp_bundle_qty"/>
+                        <button type="button" t-if="twpCanEdit" aria-label="One more bundle" t-on-click="() => this.twpStepBundle(record, 1)">+</button>
+                    </div>
+                </div>
+                <t t-call="twp_advanced_quoting.OrderLineKanbanNodes">
+                    <t t-set="nodes" t-value="node.children"/>
+                </t>
+            </div>
+        </div>
+    </t>
+
+    <t t-name="twp_advanced_quoting.OrderLineKanbanMenu">
+        <t t-set="items" t-value="twpMenuItems(record)"/>
+        <Dropdown t-if="items.length" position="'bottom-end'">
+            <button type="button" class="btn btn-link o_twp_m_menu" t-att-aria-label="'Actions for ' + record.data.name">
+                <i class="fa fa-ellipsis-h" aria-hidden="true"/>
+            </button>
+            <t t-set-slot="content">
+                <DropdownItem t-foreach="items" t-as="item" t-key="item.key" onSelected="item.run">
+                    <i class="me-2 fa fa-fw" t-att-class="item.icon" aria-hidden="true"/><t t-esc="item.label"/>
+                </DropdownItem>
+            </t>
+        </Dropdown>
+    </t>
+
+    <t t-name="twp_advanced_quoting.OrderLineKanbanCard">
+        <KanbanRecord
+            archInfo="props.archInfo"
+            Compiler="props.Compiler"
+            canResequence="false"
+            forceGlobalClick="props.forceGlobalClick"
+            groupByField="props.list.groupByField"
+            getSelection.bind="getSelection"
+            toggleSelection.bind="toggleSelection"
+            deleteRecord="props.deleteRecord"
+            archiveRecord="(record, active) => this.archiveRecord(record, active)"
+            openRecord="props.openRecord"
+            readonly="props.readonly"
+            record="record"
+            selectionAvailable="state.selectionAvailable"
+        />
+    </t>
+
+</templates>

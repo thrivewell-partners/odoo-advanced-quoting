@@ -95,6 +95,40 @@
                 <field name="twp_hide_on_documents" string="Print" widget="twp_print_toggle" optional="show"
                        invisible="display_type" width="24px"/>
             </xpath>
+            <!-- On a phone the lines are cards: the renderer draws bundles and options around them
+                 (static/src/mobile_lines), from these fields. -->
+            <xpath expr="//field[@name='order_line']/kanban" position="inside">
+                <field name="name"/>
+                <field name="collapse_prices"/>
+                <field name="collapse_composition"/>
+                <field name="is_optional"/>
+                <field name="twp_is_bundle"/>
+                <field name="twp_bundle_qty"/>
+                <field name="twp_in_bundle"/>
+                <field name="twp_option_mode"/>
+                <field name="twp_option_group"/>
+                <field name="twp_option_chosen"/>
+                <field name="twp_not_chosen"/>
+                <field name="twp_standalone"/>
+                <field name="twp_hide_price"/>
+            </xpath>
+            <xpath expr="//field[@name='order_line']/kanban//div[hasclass('col-auto')]" position="inside">
+                <field name="twp_hide_on_documents" widget="twp_print_toggle" class="float-end pe-1"/>
+            </xpath>
+            <xpath expr="//field[@name='order_line']/kanban//t[@t-if='record.discount?.raw_value']" position="after">
+                <div class="text-muted" t-if="record.discount.raw_value" groups="sale.group_discount_per_so_line">
+                    Net Unit Price:
+                    <field name="twp_net_price_unit"/>
+                </div>
+                <div class="text-muted" t-if="record.twp_in_bundle.raw_value">
+                    Per Bundle:
+                    <field name="twp_qty_per_bundle"/>
+                </div>
+                <div class="o_twp_m_tags" t-if="record.twp_hide_on_documents.raw_value or record.twp_hide_price.raw_value">
+                    <span class="badge text-bg-light" t-if="record.twp_hide_on_documents.raw_value">Hidden on documents</span>
+                    <span class="badge text-bg-light" t-if="record.twp_hide_price.raw_value">Price hidden</span>
+                </div>
+            </xpath>
         </field>
     </record>
 
